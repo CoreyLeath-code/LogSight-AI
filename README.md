@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/JSON_Reliability-99.8%25-blueviolet?style=flat-square" alt="JSON Parse SLA">
   <img src="https://img.shields.io/badge/p95_latency-3.4s-orange?style=flat-square" alt="Latency">
 </p>
+
 [![Continuous Integration](https://github.com/Trojan3877/LogSight-AI/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Trojan3877/LogSight-AI/actions/workflows/ci-cd.yml)
 [![Code Quality Assurance](https://github.com/Trojan3877/LogSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Trojan3877/LogSight-AI/actions/workflows/ci.yml)
 [![Security Analysis](https://github.com/Trojan3877/LogSight-AI/actions/workflows/security.yml/badge.svg)](https://github.com/Trojan3877/LogSight-AI/actions/workflows/security.yml)
