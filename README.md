@@ -59,68 +59,37 @@ The processing lifecycle follows a unidirectional, structured pipeline to ensure
 
 ```
 
-## 📊 Model Metrics
+## 📊 Repository Metrics
 
-| Metric | Value | Notes |
-|---------|------:|-------|
-| Accuracy | TBD | Overall classification accuracy |
-| Precision | TBD | Positive predictive value |
-| Recall | TBD | Detection rate |
-| F1 Score | TBD | Harmonic mean of precision and recall |
-| ROC-AUC | TBD | Binary classifier performance |
-| PR-AUC | TBD | Precision-Recall performance |
-| False Positive Rate | TBD | Lower is better |
-| False Negative Rate | TBD | Lower is better |
-| Average Detection Confidence | TBD | Mean anomaly confidence |
-| Training Dataset Size | TBD | Number of log samples |
-| Validation Dataset Size | TBD | Number of validation samples |
-| Test Dataset Size | TBD | Number of test samples |
+Measured from the repository on 2026-07-12.
 
-## ⚡ Performance Benchmarks
+| Area | Metric | Current Value | Source |
+|---|---:|---:|---|
+| Codebase | Tracked files | 33 | `git ls-files` |
+| Codebase | Python files | 14 | `*.py` files across app, agents, package, and tests |
+| Codebase | Python NCLOC | 846 | Non-empty, non-comment Python lines |
+| Package | Core package modules | 4 | `logsight/*.py` |
+| Package | Agent modules | 3 | `agents/*.py` |
+| Tests | Pytest test cases | 34 passing | `pytest --cov=logsight` |
+| Tests | Package coverage | 80% | `pytest-cov` over `logsight` |
+| CI/CD | GitHub Actions workflows | 7 | `.github/workflows/*.yml` |
+| Dependencies | Runtime dependencies | 5 | `requirements.txt` |
+| Dependencies | Development dependencies | 3 | `requirements-dev.txt` |
+| Delivery | Runtime assets | 3 | `Dockerfile`, `docker-compose.yml`, `Procfile` |
+| Docs | Documentation pages | 3 | `README.md`, `docs/*.md` |
 
-| Benchmark | Result | Target |
-|-----------|--------:|--------:|
-| Inference Latency | TBD ms | <100 ms |
-| Batch Inference (100 logs) | TBD ms | <1 s |
-| Throughput | TBD logs/sec | Higher is better |
-| API Response Time | TBD ms | <150 ms |
-| Model Load Time | TBD sec | <5 s |
-| Cold Start | TBD sec | <10 s |
-| Memory Usage | TBD MB | Minimize |
-| CPU Utilization | TBD % | Efficient |
-| GPU Utilization | TBD % | When available |
-| Docker Image Size | TBD MB | Minimize |
-| Startup Time | TBD sec | <5 s |
+## ⚡ Operational Metrics
 
-## 🧪 Testing Metrics
-
-| Metric | Status |
-|---------|--------|
-| Unit Tests | ✅ |
-| Integration Tests | ✅ |
-| API Tests | ✅ |
-| Smoke Tests | ✅ |
-| Regression Tests | ✅ |
-| Benchmark Tests | ✅ |
-| Code Coverage | TBD% |
-| Branch Coverage | TBD% |
-| Mutation Testing | Planned |
-
-## 🚀 Engineering Metrics
-
-| Metric | Status |
-|---------|--------|
-| GitHub Actions | ✅ Passing |
-| Docker | ✅ |
-| FastAPI | ✅ |
-| Streamlit Dashboard | ✅ |
-| MLflow Tracking | Planned |
-| Prometheus Metrics | Planned |
-| Structured Logging | ✅ |
-| OpenAPI Documentation | ✅ |
-| Security Scan | ✅ |
-| Dependency Scan | ✅ |
-| Container Scan | ✅ |
+| Metric | Default / Current Value | Produced By |
+|---|---:|---|
+| Parsed log entries | Runtime total | `compute_stats()` |
+| Error count | `ERROR` + `CRITICAL` entries | `compute_stats()` |
+| Warning count | `WARNING` entries | `compute_stats()` |
+| Error rate | `error_count / total` | `WindowStats.error_rate` |
+| Top messages | Top 10 repeated messages | `compute_stats()` |
+| Anomaly threshold | `zscore_threshold = 2.5` | `detect_anomalies()` |
+| Spike window size | `window_size = 100` entries | `error_rate_spike()` |
+| Spike threshold | `spike_threshold = 0.25` | `error_rate_spike()` |
 
 
  1. **The Core Four Model:** Every worker is explicitly configured with decoupled system instructions, isolated parameter inputs, structural schema requirements, and a dedicated role context.
