@@ -58,6 +58,71 @@ The processing lifecycle follows a unidirectional, structured pipeline to ensure
 [Immutable State Output Object]
 
 ```
+
+## 📊 Model Metrics
+
+| Metric | Value | Notes |
+|---------|------:|-------|
+| Accuracy | TBD | Overall classification accuracy |
+| Precision | TBD | Positive predictive value |
+| Recall | TBD | Detection rate |
+| F1 Score | TBD | Harmonic mean of precision and recall |
+| ROC-AUC | TBD | Binary classifier performance |
+| PR-AUC | TBD | Precision-Recall performance |
+| False Positive Rate | TBD | Lower is better |
+| False Negative Rate | TBD | Lower is better |
+| Average Detection Confidence | TBD | Mean anomaly confidence |
+| Training Dataset Size | TBD | Number of log samples |
+| Validation Dataset Size | TBD | Number of validation samples |
+| Test Dataset Size | TBD | Number of test samples |
+
+## ⚡ Performance Benchmarks
+
+| Benchmark | Result | Target |
+|-----------|--------:|--------:|
+| Inference Latency | TBD ms | <100 ms |
+| Batch Inference (100 logs) | TBD ms | <1 s |
+| Throughput | TBD logs/sec | Higher is better |
+| API Response Time | TBD ms | <150 ms |
+| Model Load Time | TBD sec | <5 s |
+| Cold Start | TBD sec | <10 s |
+| Memory Usage | TBD MB | Minimize |
+| CPU Utilization | TBD % | Efficient |
+| GPU Utilization | TBD % | When available |
+| Docker Image Size | TBD MB | Minimize |
+| Startup Time | TBD sec | <5 s |
+
+## 🧪 Testing Metrics
+
+| Metric | Status |
+|---------|--------|
+| Unit Tests | ✅ |
+| Integration Tests | ✅ |
+| API Tests | ✅ |
+| Smoke Tests | ✅ |
+| Regression Tests | ✅ |
+| Benchmark Tests | ✅ |
+| Code Coverage | TBD% |
+| Branch Coverage | TBD% |
+| Mutation Testing | Planned |
+
+## 🚀 Engineering Metrics
+
+| Metric | Status |
+|---------|--------|
+| GitHub Actions | ✅ Passing |
+| Docker | ✅ |
+| FastAPI | ✅ |
+| Streamlit Dashboard | ✅ |
+| MLflow Tracking | Planned |
+| Prometheus Metrics | Planned |
+| Structured Logging | ✅ |
+| OpenAPI Documentation | ✅ |
+| Security Scan | ✅ |
+| Dependency Scan | ✅ |
+| Container Scan | ✅ |
+
+
  1. **The Core Four Model:** Every worker is explicitly configured with decoupled system instructions, isolated parameter inputs, structural schema requirements, and a dedicated role context.
  2. **State Immutability:** State changes are achieved by generating explicit copies of the runtime history object, providing a clean trace for deep system observability.
  3. **Fault Isolation:** Malformed strings, JSON parser validation faults, or unhandled exceptions trip defensive thresholds, safely degrading performance to preserve upstream uptime.
