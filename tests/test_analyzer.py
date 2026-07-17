@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from logsight.analyzer import (
     AnomalyReport,
     compute_stats,
@@ -49,6 +51,11 @@ class TestComputeStats:
 
 
 class TestDetectAnomalies:
+    @pytest.mark.parametrize("threshold", [-1, float("inf"), float("nan")])
+    def test_rejects_invalid_threshold(self, threshold):
+        with pytest.raises(ValueError):
+            detect_anomalies([_entry("INFO", "ok")], zscore_threshold=threshold)
+
     def test_empty_entries(self):
         report = detect_anomalies([])
         assert not report.has_anomalies
@@ -91,13 +98,23 @@ class TestDetectAnomalies:
 
 
 class TestErrorRateSpike:
+    @pytest.mark.parametrize("window", [0, -1])
+    def test_rejects_invalid_window(self, window):
+        with pytest.raises(ValueError):
+            error_rate_spike([], window_size=window)
+
+    @pytest.mark.parametrize("threshold", [-0.01, 1.01])
+    def test_rejects_invalid_spike_threshold(self, threshold):
+        with pytest.raises(ValueError):
+            error_rate_spike([], spike_threshold=threshold)
+
     def test_no_spike(self):
         entries = [_entry("INFO", "ok")] * 200
         spikes = error_rate_spike(entries, window_size=100, spike_threshold=0.25)
         assert spikes == []
 
     def test_spike_detected(self):
-        # First 100 entries are all errors → spike.
+        # First 100 entries are all errors â†’ spike.
         entries = [_entry("ERROR", "fail")] * 100 + [_entry("INFO", "ok")] * 100
         spikes = error_rate_spike(entries, window_size=100, spike_threshold=0.25)
         assert 0 in spikes
