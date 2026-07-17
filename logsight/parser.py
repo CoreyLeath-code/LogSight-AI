@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -39,7 +39,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "nginx_access",
         re.compile(
-            r'^(?P<host>\S+)\s+-\s+(?P<user>\S+)\s+\[(?P<timestamp>[^\]]+)\]\s+'
+            r"^(?P<host>\S+)\s+-\s+(?P<user>\S+)\s+\[(?P<timestamp>[^\]]+)\]\s+"
             r'"(?P<request>[^"]+)"\s+(?P<status>\d{3})\s+(?P<bytes>\d+)'
         ),
     ),
@@ -126,8 +126,8 @@ def parse_line(line: str) -> LogEntry:
     return LogEntry(raw=line, message=line)
 
 
-def parse_lines(lines: list[str]) -> list[LogEntry]:
-    """Parse a list of log lines."""
+def parse_lines(lines: Iterable[str]) -> list[LogEntry]:
+    """Parse an iterable of log lines, excluding blank records."""
     return [parse_line(line) for line in lines if line.strip()]
 
 
