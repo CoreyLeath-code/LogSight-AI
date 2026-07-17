@@ -1,12 +1,15 @@
 # agents/guards.py
 class CircuitBreakerException(Exception):
     """Custom exception raised when system constraints are violated."""
+
     pass
+
 
 class ExecutionCircuitBreaker:
     """
     Monitors system bounds to prevent infinite tool-use or self-correction loops.
     """
+
     def __init__(self, max_loops: int = 3, error_threshold: int = 2):
         self.max_loops = max_loops
         self.error_threshold = error_threshold
