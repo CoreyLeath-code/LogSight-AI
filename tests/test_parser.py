@@ -33,6 +33,10 @@ class TestParseLevel:
 
 
 class TestIso8601Format:
+    def test_invalid_timestamp_is_none(self):
+        entry = parse_line("2024-99-99T99:99:99 INFO impossible")
+        assert entry.timestamp is None
+
     def test_basic(self):
         line = "2024-01-15T12:34:56 INFO [app] Server started"
         entry = parse_line(line)
@@ -79,6 +83,10 @@ class TestSyslogFormat:
 
 
 class TestParseLines:
+    def test_accepts_generator(self):
+        entries = parse_lines(line for line in ["INFO one", "ERROR two"])
+        assert [entry.level for entry in entries] == [LogLevel.INFO, LogLevel.ERROR]
+
     def test_filters_blank_lines(self):
         lines = ["INFO hello\n", "\n", "  \n", "ERROR world\n"]
         entries = parse_lines(lines)
@@ -107,6 +115,11 @@ class TestLogEntry:
         raw = "INFO some log message"
         entry = parse_line(raw)
         assert entry.raw == raw
+
+    def test_empty_line_is_preserved_as_unknown(self):
+        entry = parse_line("")
+        assert entry.level == LogLevel.UNKNOWN
+        assert entry.message == ""
 
 
 class TestParseFile:
