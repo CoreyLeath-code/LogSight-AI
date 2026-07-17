@@ -8,19 +8,21 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from logsight.analyzer import detect_anomalies, error_rate_spike
+from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike
 from logsight.parser import parse_file, parse_lines
 
 console = Console()
 
 
-def _print_report(report, show_anomalies: bool) -> None:
+def _print_report(report: AnomalyReport, show_anomalies: bool) -> None:
     stats = report.stats
     console.print("\n[bold]LogSight-AI Analysis[/bold]")
     console.print(f"  Total entries : [cyan]{stats.total}[/cyan]")
     console.print(f"  Errors        : [red]{stats.error_count}[/red]")
     console.print(f"  Warnings      : [yellow]{stats.warning_count}[/yellow]")
-    console.print(f"  Error rate    : [{'red' if stats.error_rate >= 0.10 else 'green'}]{stats.error_rate:.1%}[/]")
+    console.print(
+        f"  Error rate    : [{'red' if stats.error_rate >= 0.10 else 'green'}]{stats.error_rate:.1%}[/]"
+    )
 
     if stats.top_messages:
         table = Table(title="Top Messages", show_header=True, header_style="bold magenta")
@@ -38,7 +40,7 @@ def _print_report(report, show_anomalies: bool) -> None:
                 f"  [[{level_style}]{entry.level.value}[/{level_style}]] {entry.message[:200]}"
             )
         if len(report.anomalies) > 20:
-            console.print(f"  … and {len(report.anomalies) - 20} more.")
+            console.print(f"  â€¦ and {len(report.anomalies) - 20} more.")
     elif show_anomalies:
         console.print("\n[bold green]No anomalies detected.[/bold green]")
 
@@ -55,6 +57,7 @@ def main() -> None:
     "--threshold",
     "-t",
     default=2.5,
+    type=click.FloatRange(min=0),
     show_default=True,
     help="Z-score threshold for anomaly detection.",
 )
@@ -68,6 +71,7 @@ def main() -> None:
     "--window",
     "-w",
     default=100,
+    type=click.IntRange(min=1),
     show_default=True,
     help="Window size for error-rate spike detection.",
 )
@@ -75,6 +79,7 @@ def main() -> None:
     "--spike-threshold",
     "-s",
     default=0.25,
+    type=click.FloatRange(min=0, max=1),
     show_default=True,
     help="Error-rate fraction that constitutes a spike.",
 )
@@ -112,6 +117,7 @@ def analyze_cmd(
     "--threshold",
     "-t",
     default=2.5,
+    type=click.FloatRange(min=0),
     show_default=True,
     help="Z-score threshold for anomaly detection.",
 )
@@ -134,9 +140,9 @@ def health_cmd() -> None:
 
     sample = parse_line("INFO health check")
     report = detect_anomalies([sample])
-    console.print("[bold green]✓ LogSight-AI is healthy.[/bold green]")
+    console.print("[bold green]âœ“ LogSight-AI is healthy.[/bold green]")
     console.print(f"  version : [cyan]{_version()}[/cyan]")
-    console.print(f"  parsed  : [cyan]{sample.level.value}[/cyan] — {sample.message}")
+    console.print(f"  parsed  : [cyan]{sample.level.value}[/cyan] â€” {sample.message}")
     console.print(f"  anomaly : [cyan]{report.has_anomalies}[/cyan]")
 
 
