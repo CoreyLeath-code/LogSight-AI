@@ -1,5 +1,4 @@
-click>=8.1.7
-rich>=13.7.0
-scikit-learn>=1.4.0
-numpy>=1.26.0
-streamlit>=1.35.0
+# Kept for environments that cannot install project extras. pyproject.toml is
+# the canonical dependency declaration.
+click>=8.1.7,<9
+rich>=13.7.0,<15
