@@ -1,38 +1,17 @@
-version: '3.8'
-
 services:
-  # The core Python/C++ pipeline engine
-  engine:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=production
-      - LOG_INGESTION_RATE=50000
-    restart: unless-stopped
-
-  # Visualizer Streamlit Frontend
-  dashboard:
-    image: python:3.10-slim
-    volumes:
-      - ./app_demo.py:/app/app_demo.py
-    working_dir: /app
-    ports:
-      - "8501:8501"
-    command: >
-      sh -c "pip install streamlit pandas numpy && streamlit run app_demo.py --server.port=8501 --server.address=0.0.0.0"
-    depends_on:
-      - engine
-
-  # Automated Mock Log Traffic Pipeline Injector
-  simulator:
-    image: python:3.10-slim
-    volumes:
-      - ./log_simulator.py:/app/log_simulator.py
-    working_dir: /app
-    command: >
-      sh -c "pip install requests && python log_simulator.py"
-    depends_on:
-      - engine
+  logsight:
+    build: .
+    image: logsight-ai:local
+    command: ["health"]
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M

@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-
-import numpy as np
+from math import isfinite
+from statistics import fmean, pstdev
 
 from logsight.parser import LogEntry, LogLevel
 
@@ -61,8 +61,8 @@ def compute_stats(entries: Sequence[LogEntry]) -> WindowStats:
     return stats
 
 
-def _message_lengths(entries: Sequence[LogEntry]) -> np.ndarray:
-    return np.array([len(e.message) for e in entries], dtype=float)
+def _message_lengths(entries: Sequence[LogEntry]) -> list[float]:
+    return [float(len(e.message)) for e in entries]
 
 
 def detect_anomalies(
@@ -91,6 +91,9 @@ def detect_anomalies(
     -------
     AnomalyReport
     """
+    if not isfinite(zscore_threshold) or zscore_threshold < 0:
+        raise ValueError("zscore_threshold must be a finite, non-negative number")
+
     report = AnomalyReport(zscore_threshold=zscore_threshold)
     report.stats = compute_stats(entries)
 
@@ -98,8 +101,8 @@ def detect_anomalies(
         return report
 
     lengths = _message_lengths(entries)
-    mean = float(np.mean(lengths))
-    std = float(np.std(lengths))
+    mean = fmean(lengths)
+    std = pstdev(lengths)
 
     anomalous: list[LogEntry] = []
     seen_ids: set[int] = set()
@@ -134,12 +137,17 @@ def error_rate_spike(
     window_size:
         Number of entries per sliding window.
     spike_threshold:
-        Fraction of errors that triggers a spike (``0.0``–``1.0``).
+        Fraction of errors that triggers a spike (``0.0``â€“``1.0``).
 
     Returns
     -------
     List of start indices where a spike was detected.
     """
+    if window_size <= 0:
+        raise ValueError("window_size must be greater than zero")
+    if not 0 <= spike_threshold <= 1:
+        raise ValueError("spike_threshold must be between 0 and 1")
+
     spike_starts: list[int] = []
     n = len(entries)
     for start in range(0, n - window_size + 1, window_size):

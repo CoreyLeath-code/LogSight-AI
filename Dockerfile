@@ -1,4 +1,4 @@
-# ── Stage 1: build ──────────────────────────────────────────────────────────
+# â”€â”€ Stage 1: build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY logsight/ logsight/
 # Build the wheel
 RUN python -m build --wheel --outdir /dist
 
-# ── Stage 2: runtime ─────────────────────────────────────────────────────────
+# â”€â”€ Stage 2: runtime â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 FROM python:3.11-slim AS runtime
 
 LABEL maintainer="Trojan3877" \
@@ -31,6 +31,8 @@ RUN pip install --no-cache-dir /tmp/*.whl && rm /tmp/*.whl
 
 # Drop privileges
 USER logsight
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD ["logsight", "health"]
 
 ENTRYPOINT ["logsight"]
 CMD ["--help"]
