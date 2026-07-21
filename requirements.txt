@@ -1,4 +1,4 @@
 # Kept for environments that cannot install project extras. pyproject.toml is
 # the canonical dependency declaration.
 click>=8.1.7,<9
-rich>=13.7.0,<15
+rich>=13.7.0,<16
