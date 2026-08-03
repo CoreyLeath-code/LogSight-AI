@@ -44,6 +44,10 @@ jobs:
       - run: python -m build
       - run: docker build --tag logsight-ai:${{ github.sha }} .
       - run: docker run --rm logsight-ai:${{ github.sha }} health
+      - name: Verify installed package metadata
+        run: |
+          docker run --rm --entrypoint python logsight-ai:${{ github.sha }} -c \
+            "from importlib.metadata import metadata; package = metadata('logsight-ai'); assert package['Requires-Python'] == '>=3.10'; assert package['Description-Content-Type'] == 'text/markdown'"
 
   security:
     runs-on: ubuntu-latest
