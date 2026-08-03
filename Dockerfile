@@ -7,7 +7,7 @@ WORKDIR /app
 RUN pip install --upgrade pip build
 
 # Copy project files required for the build
-COPY pyproject.toml requirements.txt ./
+COPY pyproject.toml requirements.txt README.md ./
 COPY logsight/ logsight/
 
 # Build the wheel
