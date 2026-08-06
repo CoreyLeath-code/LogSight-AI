@@ -8,13 +8,9 @@
 LogSight-AI is a local-first Python CLI for parsing common log formats, summarizing error patterns, detecting message-length outliers, and locating error-rate spikes. The production package does not transmit logs or require credentials.
 
 
-## Production Readiness Guide
+LogSight-AI parses local log files and standard input into typed events, summaries, outlier findings, and error-rate spike reports. It does not operate a hosted service, persist logs, or claim learned incident-detection accuracy. A production deployment would require a supported service boundary, authenticated multi-user access, retention and redaction controls, observability, and an owned deployment and rollback path.
 
-> This section is the portfolio audit entry point for **LogSight-AI**. It describes an engineering promotion path; it is not a claim that the repository is already production-authorized.
-
-[![CI](https://img.shields.io/github/actions/workflow/status/CoreyLeath-code/LogSight-AI/ci.yml?branch=main&label=CI)](https://github.com/CoreyLeath-code/LogSight-AI/actions) [![License](https://img.shields.io/github/license/CoreyLeath-code/LogSight-AI)](https://github.com/CoreyLeath-code/LogSight-AI/blob/main/LICENSE)
-
-### Architecture flowchart
+## Architecture flowchart
 
 ```mermaid
 flowchart LR
