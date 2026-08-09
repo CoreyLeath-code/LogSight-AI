@@ -64,6 +64,15 @@ flowchart LR
 
 Supported formats include ISO-8601 application logs, syslog, nginx access logs, and generic level-prefixed lines. Detection is an explainable statistical heuristic; it is not a trained model and no accuracy claim is made without a labeled evaluation corpus.
 
+## Evidence-backed reasoning
+
+The optional `--explain` flag turns existing detector output into concise, user-facing evidence statements. Each statement identifies its direct or statistical basis: parsed error level, message-length z-score with its configured threshold, or observed error count/rate in a complete analysis window. LogSight does not infer an incident root cause, use an LLM, send logs externally, or report a model-confidence score.
+
+```bash
+logsight analyze application.log --window 200 --spike-threshold 0.20 --explain
+cat application.log | logsight stdin --explain
+```
+
 ## Quick start
 
 ```bash
