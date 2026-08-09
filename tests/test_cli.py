@@ -64,7 +64,7 @@ class TestStdinCommand:
 
     def test_explain_uses_detector_evidence(self, tmp_path):
         log_file = tmp_path / "events.log"
-        log_file.write_text("ERROR database connection failed\\n", encoding="utf-8")
+        log_file.write_text("ERROR database connection failed\n", encoding="utf-8")
         result = CliRunner().invoke(main, ["analyze", str(log_file), "--explain"])
         assert result.exit_code == 0
         assert "Evidence-backed findings" in result.output
