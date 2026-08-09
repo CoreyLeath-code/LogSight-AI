@@ -12,6 +12,7 @@ from typing import Literal
 from logsight.analyzer import AnomalyReport, ErrorRateSpike
 
 EvidenceStrength = Literal["direct", "statistical"]
+SupportLevel = Literal["single-signal", "corroborated"]
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class EvidenceExplanation:
     category: str
     summary: str
     evidence_strength: EvidenceStrength
+    support_level: SupportLevel
     evidence: tuple[str, ...]
 
 
@@ -42,6 +44,9 @@ def explain_report(
                         "no root cause is inferred."
                     ),
                     evidence_strength="direct",
+                    support_level=(
+                        "corroborated" if "message_length_zscore" in finding.reasons else "single-signal"
+                    ),
                     evidence=(
                         f"level={entry.level.value}",
                         f"message_length={len(entry.message)}",
@@ -57,6 +62,9 @@ def explain_report(
                         "statistical threshold; no root cause is inferred."
                     ),
                     evidence_strength="statistical",
+                    support_level=(
+                        "corroborated" if "error_level" in finding.reasons else "single-signal"
+                    ),
                     evidence=(
                         f"zscore={finding.message_length_zscore:.3f}",
                         f"threshold={report.zscore_threshold:.3f}",
@@ -74,6 +82,7 @@ def explain_report(
                     "threshold; no root cause is inferred."
                 ),
                 evidence_strength="statistical",
+                support_level="single-signal",
                 evidence=(
                     f"errors={spike.error_count}",
                     f"entries={spike.total}",
