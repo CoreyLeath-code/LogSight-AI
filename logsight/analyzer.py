@@ -26,11 +26,33 @@ class WindowStats:
         return self.error_count / self.total if self.total else 0.0
 
 
+@dataclass(frozen=True)
+class AnomalyEvidence:
+    """Detection reason for one anomalous log entry."""
+
+    entry: LogEntry
+    reasons: tuple[str, ...]
+    message_length_zscore: float | None = None
+
+
+@dataclass(frozen=True)
+class ErrorRateSpike:
+    """Observed error rate for one complete analysis window."""
+
+    start: int
+    end: int
+    error_count: int
+    total: int
+    error_rate: float
+    threshold: float
+
+
 @dataclass
 class AnomalyReport:
     """Result of an anomaly scan over a sequence of log entries."""
 
     anomalies: list[LogEntry] = field(default_factory=list)
+    evidence: list[AnomalyEvidence] = field(default_factory=list)
     stats: WindowStats = field(default_factory=WindowStats)
     zscore_threshold: float = 2.5
 
@@ -105,21 +127,31 @@ def detect_anomalies(
     std = pstdev(lengths)
 
     anomalous: list[LogEntry] = []
+    evidence: list[AnomalyEvidence] = []
     seen_ids: set[int] = set()
 
     for entry in entries:
-        flagged = False
+        reasons: list[str] = []
+        zscore: float | None = None
         if flag_errors and entry.is_error:
-            flagged = True
+            reasons.append("error_level")
         if std > 0:
-            z = abs(len(entry.message) - mean) / std
-            if z > zscore_threshold:
-                flagged = True
-        if flagged and id(entry) not in seen_ids:
+            zscore = abs(len(entry.message) - mean) / std
+            if zscore > zscore_threshold:
+                reasons.append("message_length_zscore")
+        if reasons and id(entry) not in seen_ids:
             anomalous.append(entry)
+            evidence.append(
+                AnomalyEvidence(
+                    entry=entry,
+                    reasons=tuple(reasons),
+                    message_length_zscore=zscore,
+                )
+            )
             seen_ids.add(id(entry))
 
     report.anomalies = anomalous
+    report.evidence = evidence
     return report
 
 
@@ -148,12 +180,42 @@ def error_rate_spike(
     if not 0 <= spike_threshold <= 1:
         raise ValueError("spike_threshold must be between 0 and 1")
 
-    spike_starts: list[int] = []
-    n = len(entries)
-    for start in range(0, n - window_size + 1, window_size):
+    return [
+        spike.start
+        for spike in error_rate_spike_details(
+            entries,
+            window_size=window_size,
+            spike_threshold=spike_threshold,
+        )
+    ]
+
+
+def error_rate_spike_details(
+    entries: Sequence[LogEntry],
+    window_size: int = 100,
+    spike_threshold: float = 0.25,
+) -> list[ErrorRateSpike]:
+    """Return the measured evidence for every complete error-rate spike window."""
+
+    if window_size <= 0:
+        raise ValueError("window_size must be greater than zero")
+    if not 0 <= spike_threshold <= 1:
+        raise ValueError("spike_threshold must be between 0 and 1")
+
+    spikes: list[ErrorRateSpike] = []
+    for start in range(0, len(entries) - window_size + 1, window_size):
         window = entries[start : start + window_size]
-        errors = sum(1 for e in window if e.is_error)
-        rate = errors / window_size
-        if rate >= spike_threshold:
-            spike_starts.append(start)
-    return spike_starts
+        errors = sum(1 for entry in window if entry.is_error)
+        error_rate = errors / window_size
+        if error_rate >= spike_threshold:
+            spikes.append(
+                ErrorRateSpike(
+                    start=start,
+                    end=start + window_size - 1,
+                    error_count=errors,
+                    total=window_size,
+                    error_rate=error_rate,
+                    threshold=spike_threshold,
+                )
+            )
+    return spikes
