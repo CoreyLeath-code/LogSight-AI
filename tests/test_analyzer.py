@@ -9,6 +9,7 @@ from logsight.analyzer import (
     compute_stats,
     detect_anomalies,
     error_rate_spike,
+    error_rate_spike_details,
 )
 from logsight.parser import LogEntry, LogLevel, parse_line
 
@@ -127,3 +128,25 @@ class TestErrorRateSpike:
         entries = [_entry("ERROR", "fail")] * 50
         spikes = error_rate_spike(entries, window_size=100, spike_threshold=0.25)
         assert spikes == []
+
+
+class TestEvidenceDetails:
+    def test_records_direct_error_reason(self):
+        report = detect_anomalies([_entry("ERROR", "database connection failed")])
+        assert report.evidence[0].reasons == ("error_level",)
+        assert report.evidence[0].message_length_zscore is None
+
+    def test_records_zscore_reason(self):
+        normal = [_entry("INFO", "normal log line")] * 50
+        outlier = _entry("INFO", "x" * 500)
+        report = detect_anomalies(normal + [outlier], zscore_threshold=2.0, flag_errors=False)
+        assert report.evidence[0].reasons == ("message_length_zscore",)
+        assert report.evidence[0].message_length_zscore is not None
+
+    def test_spike_details_include_observed_rate(self):
+        entries = [_entry("ERROR", "fail")] * 2 + [_entry("INFO", "ok")] * 2
+        spikes = error_rate_spike_details(entries, window_size=4, spike_threshold=0.5)
+        assert spikes[0].start == 0
+        assert spikes[0].end == 3
+        assert spikes[0].error_count == 2
+        assert spikes[0].error_rate == 0.5
