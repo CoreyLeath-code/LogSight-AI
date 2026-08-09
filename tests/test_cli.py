@@ -61,7 +61,6 @@ class TestStdinCommand:
         assert result.exit_code == 0
         assert "No log entries" in result.output
 
-
     def test_explain_uses_detector_evidence(self, tmp_path):
         log_file = tmp_path / "events.log"
         log_file.write_text("ERROR database connection failed\n", encoding="utf-8")
