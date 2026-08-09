@@ -6,10 +6,12 @@ import sys
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
-from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike
+from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike_details
 from logsight.parser import parse_file, parse_lines
+from logsight.reasoning import EvidenceExplanation, explain_report
 
 console = Console()
 
@@ -29,7 +31,7 @@ def _print_report(report: AnomalyReport, show_anomalies: bool) -> None:
         table.add_column("Count", justify="right", style="cyan", no_wrap=True)
         table.add_column("Message")
         for msg, cnt in stats.top_messages:
-            table.add_row(str(cnt), msg)
+            table.add_row(str(cnt), escape(msg))
         console.print(table)
 
     if show_anomalies and report.has_anomalies:
@@ -37,12 +39,26 @@ def _print_report(report: AnomalyReport, show_anomalies: bool) -> None:
         for entry in report.anomalies[:20]:
             level_style = "red" if entry.is_error else "yellow"
             console.print(
-                f"  [[{level_style}]{entry.level.value}[/{level_style}]] {entry.message[:200]}"
+                f"  [[{level_style}]{entry.level.value}[/{level_style}]] {escape(entry.message[:200])}"
             )
         if len(report.anomalies) > 20:
             console.print(f"  â€¦ and {len(report.anomalies) - 20} more.")
     elif show_anomalies:
         console.print("\n[bold green]No anomalies detected.[/bold green]")
+
+
+def _print_explanations(explanations: list[EvidenceExplanation]) -> None:
+    """Render concise detector evidence without making causal claims."""
+
+    if not explanations:
+        return
+    console.print("\n[bold]Evidence-backed findings[/bold]")
+    for explanation in explanations:
+        evidence = ", ".join(explanation.evidence)
+        console.print(
+            f"  [{explanation.evidence_strength}] {escape(explanation.summary)} "
+            f"([dim]{escape(evidence)}[/dim])"
+        )
 
 
 @click.group()
@@ -83,12 +99,19 @@ def main() -> None:
     show_default=True,
     help="Error-rate fraction that constitutes a spike.",
 )
+@click.option(
+    "--explain",
+    is_flag=True,
+    default=False,
+    help="Show evidence-backed detector explanations.",
+)
 def analyze_cmd(
     logfile: str,
     threshold: float,
     no_anomalies: bool,
     window: int,
     spike_threshold: float,
+    explain: bool,
 ) -> None:
     """Analyze LOGFILE and report anomalies."""
     try:
@@ -104,12 +127,18 @@ def analyze_cmd(
     report = detect_anomalies(entries, zscore_threshold=threshold)
     _print_report(report, show_anomalies=not no_anomalies)
 
-    spikes = error_rate_spike(entries, window_size=window, spike_threshold=spike_threshold)
+    spikes = error_rate_spike_details(
+        entries,
+        window_size=window,
+        spike_threshold=spike_threshold,
+    )
     if spikes:
         console.print(
             f"\n[bold red]Error-rate spikes at windows starting at lines: "
-            f"{', '.join(str(s) for s in spikes)}[/bold red]"
+            f"{', '.join(str(spike.start) for spike in spikes)}[/bold red]"
         )
+    if explain:
+        _print_explanations(explain_report(report, spikes))
 
 
 @main.command("stdin")
@@ -121,7 +150,13 @@ def analyze_cmd(
     show_default=True,
     help="Z-score threshold for anomaly detection.",
 )
-def stdin_cmd(threshold: float) -> None:
+@click.option(
+    "--explain",
+    is_flag=True,
+    default=False,
+    help="Show evidence-backed detector explanations.",
+)
+def stdin_cmd(threshold: float, explain: bool) -> None:
     """Read log lines from stdin and report anomalies."""
     lines = sys.stdin.readlines()
     entries = parse_lines(lines)
@@ -130,6 +165,8 @@ def stdin_cmd(threshold: float) -> None:
         return
     report = detect_anomalies(entries, zscore_threshold=threshold)
     _print_report(report, show_anomalies=True)
+    if explain:
+        _print_explanations(explain_report(report))
 
 
 @main.command("health")

@@ -60,3 +60,12 @@ class TestStdinCommand:
         result = CliRunner().invoke(main, ["stdin"], input="\n")
         assert result.exit_code == 0
         assert "No log entries" in result.output
+
+    def test_explain_uses_detector_evidence(self, tmp_path):
+        log_file = tmp_path / "events.log"
+        log_file.write_text("ERROR database connection failed\n", encoding="utf-8")
+        result = CliRunner().invoke(main, ["analyze", str(log_file), "--explain"])
+        assert result.exit_code == 0
+        assert "Evidence-backed findings" in result.output
+        assert "level=ERROR" in result.output
+        assert "no root cause is inferred" in " ".join(result.output.split())
