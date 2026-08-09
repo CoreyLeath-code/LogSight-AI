@@ -10,8 +10,8 @@ from rich.markup import escape
 from rich.table import Table
 
 from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike_details
-from logsight.reasoning import EvidenceExplanation, explain_report
 from logsight.parser import parse_file, parse_lines
+from logsight.reasoning import EvidenceExplanation, explain_report
 
 console = Console()
 
