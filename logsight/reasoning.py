@@ -65,9 +65,7 @@ def explain_report(
                     ),
                     evidence_strength="statistical",
                     support_level=(
-                        "corroborated"
-                        if "error_level" in finding.reasons
-                        else "single-signal"
+                        "corroborated" if "error_level" in finding.reasons else "single-signal"
                     ),
                     evidence=(
                         f"zscore={finding.message_length_zscore:.3f}",
