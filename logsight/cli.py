@@ -56,8 +56,8 @@ def _print_explanations(explanations: list[EvidenceExplanation]) -> None:
     for explanation in explanations:
         evidence = ", ".join(explanation.evidence)
         console.print(
-            f"  [{explanation.evidence_strength}; {explanation.support_level}] "
-            f"{escape(explanation.summary)} ([dim]{escape(evidence)}[/dim])"
+            f"  support={explanation.evidence_strength};{explanation.support_level} — "
+            f"{escape(explanation.summary)} ({escape(evidence)})"
         )
 
 
