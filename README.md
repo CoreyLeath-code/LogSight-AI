@@ -1,56 +1,53 @@
-# LogSight-AI
+# LogSight-AI — Explainable Log Analysis Heuristics
 
 [![CI](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![Development p50](https://img.shields.io/badge/1k--line_development_p50-10.315_ms-6f42c1)](benchmarks/benchmark_report.md)
+[![Benchmark workload](https://img.shields.io/badge/benchmark_workload-1%2C000_lines-2ea44f)](docs/BENCHMARKING.md)
+[![Local first](https://img.shields.io/badge/data_boundary-local_first-6b7280)](#architecture)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-LogSight-AI is a local-first Python CLI for parsing common log formats, summarizing error patterns, detecting message-length outliers, and locating error-rate spikes. The production package does not transmit logs or require credentials.
+## Abstract
 
+LogSight-AI is a local-first Python CLI that parses common log formats, summarizes error patterns, flags message-length outliers, and identifies elevated error-rate windows. Its production package does not transmit logs or require credentials. The detector is an explainable statistical heuristic—not a trained incident classifier, root-cause system, or measured accuracy claim.
 
-LogSight-AI parses local log files and standard input into typed events, summaries, outlier findings, and error-rate spike reports. It does not operate a hosted service, persist logs, or claim learned incident-detection accuracy. A production deployment would require a supported service boundary, authenticated multi-user access, retention and redaction controls, observability, and an owned deployment and rollback path.
+## Formal detection logic
 
-## Architecture flowchart
+For $N$ parsed entries with message lengths $\ell_i$, the analyzer computes the population mean $\mu$ and population standard deviation $\sigma$. When $\sigma>0$, it flags a length outlier only when
 
-```mermaid
-flowchart LR
-    Input --> Validate[Schema + data checks] --> Model[Versioned model] --> Serve[API / dashboard] --> Observe[Metrics + drift]
-```
+\[
+z_i=\frac{|\ell_i-\mu|}{\sigma}>\tau_z,\qquad \tau_z=2.5\ \text{by default}.
+\]
 
-### Quickstart and local validation
+Separately, ERROR and CRITICAL entries are flagged by a direct rule. For each complete, non-overlapping window of $W$ entries, it reports an error-rate spike when
 
-The supported local path should be reproducible from a clean checkout. The inferred stack for this repository is **Python/ML**.
+\[
+r_j=\frac{e_j}{W}\geq\tau_r,\qquad W=100,\quad \tau_r=0.25\ \text{by default}.
+\]
 
-```bash
-python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-pytest -q
-```
+These definitions map directly to [logsight/analyzer.py](logsight/analyzer.py); zero-variance message lengths receive no z-score, and partial trailing windows are intentionally excluded. Read the complete [mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md) and [complexity analysis](docs/COMPLEXITY_ANALYSIS.md).
 
-If the project uses external services, model artifacts, cloud credentials, or private data, start them through documented local fixtures or mocks. Never place secrets or identifiable records in the repository.
+## Evidence snapshot
 
-### Research-style metrics and benchmarks
+| Evidence | Value | Scope |
+|---|---:|---|
+| Development benchmark input | 1,000 log lines | Local pipeline microbenchmark, 2026-07-17 |
+| Median / mean latency | 10.315 / 10.394 ms | Development baseline; not a service SLO |
+| Mean throughput | 96.21 pipeline runs/s | Same 1,000-line local workload |
+| Detection threshold | z-score > 2.5 | Fixed default policy, not a calibrated significance level |
+| Spike threshold | error rate >= 0.25 in 100 entries | Fixed default policy, not a learned decision boundary |
 
-| Evidence | Required record |
-|---|---|
-| Correctness | Test command, commit SHA, runtime, and pass/fail result |
-| Performance | Warm-up, sample count, concurrency, median, p95, p99, throughput, and memory |
-| Data/model quality | Dataset version, split strategy, leakage controls, calibration, subgroup results, and uncertainty |
-| Runtime | Image digest, health-check latency, resource limits, and rollback target |
-| Security | Dependency, secret, SAST, container, and SBOM results |
+The dated measurements are recorded in [benchmarks/benchmark_report.md](benchmarks/benchmark_report.md). CI generates and retains per-commit benchmark JSON; compare only like-for-like Python, hardware, workload, and warm-up configurations. No labeled incident dataset or precision/recall result is committed.
 
-A benchmark number belongs in a versioned artifact tied to a commit and hardware/runtime description. Engineering benchmarks must not be presented as clinical, financial, safety, or model-quality validation without the appropriate domain evidence.
+## Research questions
 
-### Extended Q&A
+1. What precision, recall, and alert burden do error-level, z-score, and error-rate rules produce on a versioned labeled corpus?
+2. How do non-overlapping, overlapping, and time-based windows trade detection delay against false alerts?
+3. How stable are fixed thresholds across formats, services, and message-length distributions?
+4. How do parsing and analysis latency scale with line count, line length, and unique-message cardinality?
 
-**What is production-ready for this repository?**  
-A reproducible build, tested public contract, controlled configuration, observable runtime, documented security boundary, versioned artifacts, and a tested rollback path.
-
-**What must remain explicit?**  
-The intended use, excluded use, data/credential handling, model or algorithm limitations, and which metrics are measured versus aspirational.
-
-**What should be completed next?**  
-Use the linked production-readiness issue for this repository as the checklist. Resolve missing tests, deployment instructions, observability, supply-chain controls, and release evidence before attaching a production claim.
-
+The [academic audit](docs/ACADEMIC_AUDIT.md) documents the repository's direct algorithmic strengths, evidence boundaries, and next experiments.
 
 ## Architecture
 
