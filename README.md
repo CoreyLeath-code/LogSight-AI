@@ -63,7 +63,7 @@ Supported formats include ISO-8601 application logs, syslog, nginx access logs, 
 
 ## Evidence-backed reasoning
 
-The optional `--explain` flag turns existing detector output into concise, user-facing evidence statements. Each statement identifies its direct or statistical basis: parsed error level, message-length z-score with its configured threshold, or observed error count/rate in a complete analysis window. LogSight does not infer an incident root cause, use an LLM, send logs externally, or report a model-confidence score.
+The optional `--explain` flag turns existing detector output into concise, user-facing evidence statements. Each statement identifies its direct or statistical basis: parsed error level, message-length z-score with its configured threshold, or observed error count/rate in a complete analysis window. Each statement also reports a deterministic support level: `single-signal` for one detector signal and `corroborated` when the same entry meets both error-level and statistical criteria. LogSight does not infer an incident root cause, use an LLM, send logs externally, or report a model-confidence score.
 
 ```bash
 logsight analyze application.log --window 200 --spike-threshold 0.20 --explain

@@ -68,4 +68,5 @@ class TestStdinCommand:
         assert result.exit_code == 0
         assert "Evidence-backed findings" in result.output
         assert "level=ERROR" in result.output
+        assert "single-signal" in result.output
         assert "no root cause is inferred" in " ".join(result.output.split())

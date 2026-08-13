@@ -19,6 +19,7 @@ def test_explains_direct_error_evidence_without_causal_claim():
     assert len(explanations) == 1
     assert explanations[0].category == "error-level"
     assert explanations[0].evidence_strength == "direct"
+    assert explanations[0].support_level == "single-signal"
     assert "level=ERROR" in explanations[0].evidence
     assert "no root cause is inferred" in explanations[0].summary
 
@@ -48,3 +49,12 @@ def test_returns_no_explanations_when_detector_has_no_findings():
     report = detect_anomalies([_entry("INFO", "healthy")])
 
     assert explain_report(report) == []
+
+
+def test_marks_two_detector_signals_as_corroborated():
+    entries = [_entry("INFO", "normal")] * 20 + [_entry("ERROR", "x" * 500)]
+    report = detect_anomalies(entries, zscore_threshold=2.0)
+
+    explanations = explain_report(report)
+
+    assert any(item.support_level == "corroborated" for item in explanations)
