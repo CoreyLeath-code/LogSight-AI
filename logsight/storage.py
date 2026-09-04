@@ -36,7 +36,9 @@ class ClickHouseStore:
 
 
 class QdrantStore:
-    def __init__(self, base_url: str = "http://localhost:6333", collection: str = "logsight") -> None:
+    def __init__(
+        self, base_url: str = "http://localhost:6333", collection: str = "logsight"
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.collection = collection
 

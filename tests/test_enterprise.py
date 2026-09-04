@@ -1,6 +1,12 @@
 """Tests for enterprise observability primitives."""
 
-from logsight.enterprise import WebhookNotifier, enrich, extract_template, score_event, semantic_features
+from logsight.enterprise import (
+    WebhookNotifier,
+    enrich,
+    extract_template,
+    score_event,
+    semantic_features,
+)
 from logsight.parser import parse_line
 
 
