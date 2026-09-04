@@ -42,7 +42,13 @@ class EnrichedLog:
         return json.dumps(self.to_dict(), separators=(",", ":"), sort_keys=True)
 
 
-def enrich(entry: LogEntry, *, service: str = "unknown", source: str = "unknown", host: str = "unknown") -> EnrichedLog:
+def enrich(
+    entry: LogEntry,
+    *,
+    service: str = "unknown",
+    source: str = "unknown",
+    host: str = "unknown",
+) -> EnrichedLog:
     """Convert the legacy parser record into a correlation-friendly event."""
     timestamp = entry.timestamp or datetime.now(timezone.utc)
     attributes = dict(entry.extra)
@@ -64,7 +70,9 @@ def enrich(entry: LogEntry, *, service: str = "unknown", source: str = "unknown"
     )
 
 
-_TEMPLATE_TOKEN = re.compile(r"(?:\b\d+(?:\.\d+)?\b|\b[0-9a-fA-F]{8,}\b|\b\d{1,3}(?:\.\d{1,3}){3}\b)")
+_TEMPLATE_TOKEN = re.compile(
+    r"(?:\b\d+(?:\.\d+)?\b|\b[0-9a-fA-F]{8,}\b|\b\d{1,3}(?:\.\d{1,3}){3}\b)"
+)
 
 
 def extract_template(message: str) -> str:
@@ -73,7 +81,7 @@ def extract_template(message: str) -> str:
     Deployments can replace this implementation with Drain3 without changing
     the event contract.
     """
-    return _TEMPLATE_TOKEN.sub("<*>" , message)
+    return _TEMPLATE_TOKEN.sub("<*>", message)
 
 
 def semantic_features(message: str) -> list[float]:
@@ -102,12 +110,23 @@ class AnomalyScore:
 def score_event(event: EnrichedLog, recent: list[EnrichedLog]) -> AnomalyScore:
     """Combine frequency and structural signals into a deterministic score."""
     template = event.template or extract_template(event.message)
-    same = sum(1 for item in recent if (item.template or extract_template(item.message)) == template)
-    error_rate = sum(item.level in {"ERROR", "CRITICAL"} for item in recent) / max(len(recent), 1)
+    same = sum(
+        1
+        for item in recent
+        if (item.template or extract_template(item.message)) == template
+    )
+    error_rate = sum(
+        item.level in {"ERROR", "CRITICAL"} for item in recent
+    ) / max(len(recent), 1)
     rarity = 1.0 / (same + 1)
     severity = 1.0 if event.level in {"ERROR", "CRITICAL"} else 0.0
     score = min(1.0, 0.45 * rarity + 0.35 * error_rate + 0.20 * severity)
-    return AnomalyScore(score, f"template_frequency={same},window_error_rate={error_rate:.3f}", "hybrid", event.fingerprint or "")
+    return AnomalyScore(
+        score,
+        f"template_frequency={same},window_error_rate={error_rate:.3f}",
+        "hybrid",
+        event.fingerprint or "",
+    )
 
 
 class WebhookNotifier:
@@ -121,9 +140,14 @@ class WebhookNotifier:
         if not self.url:
             return False
         body = json.dumps(payload).encode("utf-8")
-        request = urllib.request.Request(self.url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        request = urllib.request.Request(
+            self.url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310
                 return 200 <= response.status < 300
         except (OSError, ValueError):
             return False
