@@ -39,7 +39,12 @@ _metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
 
 
 def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
-    event = enrich(parse_line(item.line), service=item.service, source=item.source, host=item.host)
+    event = enrich(
+        parse_line(item.line),
+        service=item.service,
+        source=item.source,
+        host=item.host,
+    )
     event.template = extract_template(event.message)
     _recent.append(event)
     result = score_event(event, list(_recent))
@@ -80,7 +85,10 @@ def create_app() -> Any:
     async def recent(limit: int = 100) -> dict[str, Any]:
         if not 1 <= limit <= 500:
             raise HTTPException(status_code=400, detail="limit must be between 1 and 500")
-        return {"count": min(limit, len(_recent)), "events": [e.to_dict() for e in list(_recent)[-limit:]]}
+        return {
+            "count": min(limit, len(_recent)),
+            "events": [e.to_dict() for e in list(_recent)[-limit:]],
+        }
 
     return app
 
