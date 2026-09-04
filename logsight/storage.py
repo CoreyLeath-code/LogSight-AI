@@ -13,9 +13,7 @@ from typing import Any
 
 
 class ClickHouseStore:
-    def __init__(
-        self, base_url: str = "http://localhost:8123", database: str = "logsight"
-    ) -> None:
+    def __init__(self, base_url: str = "http://localhost:8123", database: str = "logsight") -> None:
         self.base_url = base_url.rstrip("/")
         self.database = database
 
@@ -38,17 +36,12 @@ class ClickHouseStore:
 
 
 class QdrantStore:
-    def __init__(
-        self, base_url: str = "http://localhost:6333", collection: str = "logsight"
-    ) -> None:
+    def __init__(self, base_url: str = "http://localhost:6333", collection: str = "logsight") -> None:
         self.base_url = base_url.rstrip("/")
         self.collection = collection
 
     def upsert(self, points: list[dict[str, Any]]) -> dict[str, Any]:
-        url = (
-            f"{self.base_url}/collections/"
-            f"{urllib.parse.quote(self.collection, safe='')}/points"
-        )
+        url = f"{self.base_url}/collections/{urllib.parse.quote(self.collection, safe='')}/points"
         body = json.dumps({"points": points}).encode()
         request = urllib.request.Request(
             url,
