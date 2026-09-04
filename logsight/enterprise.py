@@ -144,6 +144,6 @@ class WebhookNotifier:
         )
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310
-                return 200 <= response.status < 300
+                return bool(200 <= response.status < 300)
         except (OSError, ValueError):
             return False

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
-from typing import Any
+from typing import Any, cast
 
 
 class ClickHouseStore:
@@ -26,7 +26,7 @@ class ClickHouseStore:
             method="POST",
         )
         with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310
-            return response.read()
+            return cast(bytes, response.read())
 
     def insert_events(self, events: list[dict[str, Any]]) -> None:
         if not events:
@@ -52,4 +52,4 @@ class QdrantStore:
             method="PUT",
         )
         with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310
-            return json.loads(response.read().decode())
+            return cast(dict[str, Any], json.loads(response.read().decode()))
