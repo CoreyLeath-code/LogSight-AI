@@ -1,12 +1,14 @@
 # LogSight-AI — Enterprise Log Monitoring & Anomaly Detection
 
-[![Latest Release](https://img.shields.io/github/v/release/CoreyLeath-code/LogSight-AI?display_name=tag&sort=semver)](https://github.com/CoreyLeath-code/LogSight-AI/releases/latest)
 [![CI](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml)
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![Latest Release](https://img.shields.io/github/v/release/CoreyLeath-code/LogSight-AI?display_name=tag&sort=semver)](https://github.com/CoreyLeath-code/LogSight-AI/releases/latest)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-supported-2496ED.svg)](https://www.docker.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-supported-009688.svg)](https://fastapi.tiangolo.com/)
 
-## Overview
+Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
