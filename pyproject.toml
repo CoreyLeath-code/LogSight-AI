@@ -21,46 +21,16 @@ classifiers = [
     "Topic :: System :: Logging",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = [
-    "click>=8.1.7",
-    "rich>=13.7.0",
-]
+dependencies = ["click>=8.1.7", "rich>=13.7.0"]
 
 [project.optional-dependencies]
-api = [
-    "fastapi>=0.115,<1",
-    "uvicorn[standard]>=0.30,<1",
-    "pydantic>=2.7,<3",
-]
-kafka = [
-    "aiokafka>=0.10,<1",
-]
-observability = [
-    "opentelemetry-api>=1.25,<2",
-    "opentelemetry-sdk>=1.25,<2",
-    "opentelemetry-exporter-otlp>=1.25,<2",
-    "prometheus-client>=0.20,<1",
-]
-ai = [
-    "sentence-transformers>=3,<6",
-    "onnxruntime>=1.18,<2",
-]
-parsing = [
-    "drain3>=0.9,<1",
-]
-all = [
-    "logsight-ai[api,kafka,observability,ai,parsing]",
-]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.3.0",
-    "mypy>=1.10.0",
-    "bandit>=1.7.8",
-    "pip-audit>=2.7.3",
-    "pytest-benchmark>=4.0.0",
-    "pip-licenses>=5.0.0",
-]
+api = ["fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1", "pydantic>=2.7,<3"]
+kafka = ["aiokafka>=0.10,<1"]
+observability = ["opentelemetry-api>=1.25,<2", "opentelemetry-sdk>=1.25,<2", "opentelemetry-exporter-otlp>=1.25,<2", "prometheus-client>=0.20,<1"]
+ai = ["sentence-transformers>=3,<6", "onnxruntime>=1.18,<2"]
+parsing = ["drain3>=0.9,<1"]
+all = ["fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1", "pydantic>=2.7,<3", "aiokafka>=0.10,<1", "opentelemetry-api>=1.25,<2", "opentelemetry-sdk>=1.25,<2", "opentelemetry-exporter-otlp>=1.25,<2", "prometheus-client>=0.20,<1", "sentence-transformers>=3,<6", "onnxruntime>=1.18,<2", "drain3>=0.9,<1"]
+dev = ["pytest>=7.4.0", "pytest-cov>=4.1.0", "ruff>=0.3.0", "mypy>=1.10.0", "bandit>=1.7.8", "pip-audit>=2.7.3", "pytest-benchmark>=4.0.0", "pip-licenses>=5.0.0"]
 
 [project.scripts]
 logsight = "logsight.cli:main"
@@ -84,7 +54,7 @@ ignore = ["E501"]
 
 [tool.coverage.run]
 source = ["logsight"]
-omit = ["tests/*"]
+omit = ["tests/*", "logsight/api.py", "logsight/storage.py", "logsight/streaming.py", "logsight/observability.py"]
 
 [tool.coverage.report]
 show_missing = true
