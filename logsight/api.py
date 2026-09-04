@@ -12,8 +12,13 @@ from .parser import parse_line
 try:
     from fastapi import FastAPI, HTTPException
     from pydantic import BaseModel, Field
-except ImportError:  # pragma: no cover - exercised only when extra is absent
+except ImportError:  # pragma: no cover - base installation does not need the API
     FastAPI = None  # type: ignore[assignment,misc]
+    HTTPException = RuntimeError  # type: ignore[misc,assignment]
+    BaseModel = object  # type: ignore[assignment,misc]
+
+    def Field(**_: Any) -> Any:  # type: ignore[misc]
+        return None
 
 
 class LogPayload(BaseModel):  # type: ignore[misc]
