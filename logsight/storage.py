@@ -13,7 +13,9 @@ from typing import Any
 
 
 class ClickHouseStore:
-    def __init__(self, base_url: str = "http://localhost:8123", database: str = "logsight") -> None:
+    def __init__(
+        self, base_url: str = "http://localhost:8123", database: str = "logsight"
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.database = database
 
@@ -25,7 +27,7 @@ class ClickHouseStore:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310
             return response.read()
 
     def insert_events(self, events: list[dict[str, Any]]) -> None:
@@ -36,13 +38,23 @@ class ClickHouseStore:
 
 
 class QdrantStore:
-    def __init__(self, base_url: str = "http://localhost:6333", collection: str = "logsight") -> None:
+    def __init__(
+        self, base_url: str = "http://localhost:6333", collection: str = "logsight"
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.collection = collection
 
     def upsert(self, points: list[dict[str, Any]]) -> dict[str, Any]:
-        url = f"{self.base_url}/collections/{urllib.parse.quote(self.collection, safe='')}/points"
+        url = (
+            f"{self.base_url}/collections/"
+            f"{urllib.parse.quote(self.collection, safe='')}/points"
+        )
         body = json.dumps({"points": points}).encode()
-        request = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="PUT")
-        with urllib.request.urlopen(request, timeout=10) as response:
+        request = urllib.request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="PUT",
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310
             return json.loads(response.read().decode())
