@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections import deque
+from dataclasses import asdict
 from typing import Any
 
 from .enterprise import EnrichedLog, enrich, extract_template, score_event
@@ -65,14 +66,14 @@ def create_app() -> Any:
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload) -> dict[str, Any]:
         event, result = _process(payload)
-        return {"event": event.to_dict(), "anomaly": result.__dict__}
+        return {"event": event.to_dict(), "anomaly": asdict(result)}
 
     @app.post("/v1/logs/batch")
     async def ingest_batch(payload: BatchPayload) -> dict[str, Any]:
         results = []
         for item in payload.logs:
             event, result = _process(item)
-            results.append({"event": event.to_dict(), "anomaly": result.__dict__})
+            results.append({"event": event.to_dict(), "anomaly": asdict(result)})
         return {"count": len(results), "results": results}
 
     @app.get("/v1/logs/recent")
