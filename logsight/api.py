@@ -10,11 +10,12 @@ from .enterprise import EnrichedLog, enrich, extract_template, score_event
 from .parser import parse_line
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import FastAPI, HTTPException, Response
     from pydantic import BaseModel, Field
 except ImportError:  # pragma: no cover - base installation does not need the API
     FastAPI = None  # type: ignore[assignment,misc]
     HTTPException = RuntimeError  # type: ignore[misc,assignment]
+    Response = object  # type: ignore[assignment,misc]
     BaseModel = object  # type: ignore[assignment,misc]
 
     def Field(**_: Any) -> Any:  # type: ignore[misc]
@@ -33,6 +34,18 @@ class BatchPayload(BaseModel):  # type: ignore[misc]
 
 
 _recent: deque[EnrichedLog] = deque(maxlen=int(os.getenv("LOGSIGHT_WINDOW", "500")))
+_metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
+
+
+def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
+    event = enrich(parse_line(item.line), service=item.service, source=item.source, host=item.host)
+    event.template = extract_template(event.message)
+    _recent.append(event)
+    result = score_event(event, list(_recent))
+    _metrics["logsight_ingested_total"] += 1
+    if result.score >= 0.5:
+        _metrics["logsight_anomalies_total"] += 1
+    return event, result
 
 
 def create_app() -> Any:
@@ -44,22 +57,22 @@ def create_app() -> Any:
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "logsight-api"}
 
+    @app.get("/metrics")
+    async def metrics() -> Response:
+        body = "\n".join(f"{name} {value}" for name, value in _metrics.items()) + "\n"
+        return Response(content=body, media_type="text/plain; version=0.0.4")
+
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload) -> dict[str, Any]:
-        event = enrich(parse_line(payload.line), service=payload.service, source=payload.source, host=payload.host)
-        event.template = extract_template(event.message)
-        _recent.append(event)
-        result = score_event(event, list(_recent))
+        event, result = _process(payload)
         return {"event": event.to_dict(), "anomaly": result.__dict__}
 
     @app.post("/v1/logs/batch")
     async def ingest_batch(payload: BatchPayload) -> dict[str, Any]:
         results = []
         for item in payload.logs:
-            event = enrich(parse_line(item.line), service=item.service, source=item.source, host=item.host)
-            event.template = extract_template(event.message)
-            _recent.append(event)
-            results.append({"event": event.to_dict(), "anomaly": score_event(event, list(_recent)).__dict__})
+            event, result = _process(item)
+            results.append({"event": event.to_dict(), "anomaly": result.__dict__})
         return {"count": len(results), "results": results}
 
     @app.get("/v1/logs/recent")
