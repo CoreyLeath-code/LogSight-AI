@@ -110,8 +110,12 @@ class AnomalyScore:
 def score_event(event: EnrichedLog, recent: list[EnrichedLog]) -> AnomalyScore:
     """Combine frequency and structural signals into a deterministic score."""
     template = event.template or extract_template(event.message)
-    same = sum(1 for item in recent if (item.template or extract_template(item.message)) == template)
-    error_rate = sum(item.level in {"ERROR", "CRITICAL"} for item in recent) / max(len(recent), 1)
+    same = sum(
+        1 for item in recent if (item.template or extract_template(item.message)) == template
+    )
+    error_rate = sum(item.level in {"ERROR", "CRITICAL"} for item in recent) / max(
+        len(recent), 1
+    )
     rarity = 1.0 / (same + 1)
     severity = 1.0 if event.level in {"ERROR", "CRITICAL"} else 0.0
     score = min(1.0, 0.45 * rarity + 0.35 * error_rate + 0.20 * severity)
