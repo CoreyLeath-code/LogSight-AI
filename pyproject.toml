@@ -4,18 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "logsight-ai"
-version = "0.1.0"
-description = "AI-powered log analysis and anomaly detection"
+version = "0.2.0"
+description = "Production-grade log analysis, anomaly detection, and observability platform"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-keywords = ["logging", "anomaly-detection", "ai", "monitoring"]
+keywords = ["logging", "anomaly-detection", "observability", "opentelemetry", "ai"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -28,6 +27,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+api = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2.7,<3",
+]
+kafka = [
+    "aiokafka>=0.10,<1",
+]
+observability = [
+    "opentelemetry-api>=1.25,<2",
+    "opentelemetry-sdk>=1.25,<2",
+    "opentelemetry-exporter-otlp>=1.25,<2",
+    "prometheus-client>=0.20,<1",
+]
+ai = [
+    "sentence-transformers>=3,<6",
+    "onnxruntime>=1.18,<2",
+]
+parsing = [
+    "drain3>=0.9,<1",
+]
+all = [
+    "logsight-ai[api,kafka,observability,ai,parsing]",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
@@ -66,7 +89,7 @@ omit = ["tests/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-exclude_also = ["if __name__ == .__main__.:"]
+exclude_also = ["if __name__ == .__main__:\n"]
 
 [tool.mypy]
 python_version = "3.10"
