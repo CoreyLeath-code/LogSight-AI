@@ -1,7 +1,11 @@
 services:
   logsight-api:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_EXTRAS: api
     image: logsight-ai:enterprise
+    entrypoint: []
     command: ["uvicorn", "logsight.api:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       LOGSIGHT_WINDOW: "500"
@@ -25,15 +29,7 @@ services:
 
   kafka:
     image: redpandadata/redpanda:v25.2.1
-    command:
-      - redpanda
-      - start
-      - --overprovisioned
-      - --smp=1
-      - --memory=1G
-      - --reserve-memory=0M
-      - --node-id=0
-      - --check=false
+    command: ["redpanda", "start", "--overprovisioned", "--smp=1", "--memory=1G", "--reserve-memory=0M", "--node-id=0", "--check=false"]
     ports:
       - "9092:9092"
 
