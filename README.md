@@ -94,6 +94,13 @@ pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
 
+### Helm deployment
+
+The production chart at `charts/logsight-ai` deploys the API with an HPA, PDB,
+hardened pod/container settings, and a default-deny NetworkPolicy. It requires an
+immutable image reference and explicit egress rules for deployment-owned
+dependencies. See the [Helm chart guide](charts/logsight-ai/README.md).
+
 ### Distributed inference workers
 
 The enterprise Compose stack includes an idle Celery embedding worker. Its task
@@ -238,7 +245,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Redis-backed deduplication/rate limiting
 - [x] OTel Collector deployment and trace-log correlation pipeline
 - [x] Celery/Ray distributed inference workers
-- [ ] Helm chart with HPA/PDB/network policies
+- [x] Helm chart with HPA/PDB/network policies
 - [ ] RAG incident investigator with versioned runbooks/commits
 - [ ] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
@@ -248,6 +255,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [Architecture](docs/architecture.md)
 - [Collector correlation](docs/OTEL_COLLECTOR.md)
 - [Celery inference workers](docs/CELERY_WORKERS.md)
+- [Helm chart](charts/logsight-ai/README.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)
