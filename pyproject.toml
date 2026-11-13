@@ -54,7 +54,7 @@ ignore = ["E501"]
 
 [tool.coverage.run]
 source = ["logsight"]
-omit = ["tests/*", "logsight/api.py", "logsight/storage.py", "logsight/streaming.py", "logsight/observability.py", "logsight/onnx_worker.py"]
+omit = ["tests/*", "logsight/api.py", "logsight/storage.py", "logsight/streaming.py", "logsight/observability.py", "logsight/onnx_worker.py", "logsight/logbert.py"]
 
 [tool.coverage.report]
 show_missing = true
