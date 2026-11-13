@@ -80,7 +80,8 @@ def build_template_parser(
     dependency and fails fast when it cannot be initialized.
     """
 
-    selected = (backend or os.getenv("LOGSIGHT_TEMPLATE_PARSER", "baseline")).lower()
+    configured_backend = backend if backend is not None else os.getenv("LOGSIGHT_TEMPLATE_PARSER")
+    selected = (configured_backend or "baseline").strip().lower()
     resolved_config = config_path or os.getenv("LOGSIGHT_DRAIN3_CONFIG")
     if selected == "baseline":
         return BaselineTemplateParser()
