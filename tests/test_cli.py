@@ -125,7 +125,6 @@ class TestInvestigateCommand:
         assert "7-64 character identifier" in result.output
 
 
-
 class TestBenchmarkCommand:
     def test_reports_quality_and_alert_burden_metrics(self, tmp_path):
         corpus = tmp_path / "corpus.jsonl"
