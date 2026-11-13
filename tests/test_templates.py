@@ -51,3 +51,10 @@ def test_parser_factory_defaults_to_baseline(monkeypatch: pytest.MonkeyPatch) ->
 def test_parser_factory_rejects_unknown_backends() -> None:
     with pytest.raises(ValueError, match="baseline.*drain3"):
         build_template_parser("unsupported")
+
+
+def test_drain3_adapter_initializes_with_optional_dependency() -> None:
+    pytest.importorskip("drain3")
+    parser = Drain3TemplateParser()
+
+    assert isinstance(parser.parse("request 42 failed"), str)
