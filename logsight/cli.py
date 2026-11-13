@@ -11,6 +11,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike_details
+from logsight.benchmarking import evaluate_labeled_corpus, load_labeled_corpus, quality_gate_failures
 from logsight.investigator import IncidentInvestigator, RunbookRepository
 from logsight.parser import parse_file, parse_lines
 from logsight.reasoning import EvidenceExplanation, explain_report
@@ -227,6 +228,72 @@ def investigate_cmd(
         console.print(f"  digest   : {citation.digest}")
         console.print(f"  score    : {citation.score:.4f}")
         console.print(f"  excerpt  : {escape(citation.excerpt)}")
+
+
+@main.command("benchmark")
+@click.option(
+    "--corpus",
+    type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
+    default=Path("benchmarks/corpus/v1/events.jsonl"),
+    show_default=True,
+    help="Versioned JSONL corpus with approved anomaly labels.",
+)
+@click.option(
+    "--threshold",
+    default=2.5,
+    type=click.FloatRange(min=0),
+    show_default=True,
+    help="Z-score threshold supplied to the deterministic detector.",
+)
+@click.option(
+    "--min-precision",
+    type=click.FloatRange(min=0, max=1),
+    help="Fail when precision is below this deployment-defined gate.",
+)
+@click.option(
+    "--min-recall",
+    type=click.FloatRange(min=0, max=1),
+    help="Fail when recall is below this deployment-defined gate.",
+)
+@click.option(
+    "--max-alerts-per-1000-events",
+    type=click.FloatRange(min=0),
+    help="Fail when alert volume exceeds this deployment-defined gate.",
+)
+def benchmark_cmd(
+    corpus: Path,
+    threshold: float,
+    min_precision: float | None,
+    min_recall: float | None,
+    max_alerts_per_1000_events: float | None,
+) -> None:
+    """Evaluate anomaly quality and alert burden against a labeled corpus."""
+
+    try:
+        metrics = evaluate_labeled_corpus(
+            load_labeled_corpus(corpus),
+            zscore_threshold=threshold,
+        )
+        failures = quality_gate_failures(
+            metrics,
+            min_precision=min_precision,
+            min_recall=min_recall,
+            max_alerts_per_1000_events=max_alerts_per_1000_events,
+        )
+    except (OSError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    console.print("[bold]Labeled benchmark results[/bold]")
+    console.print(f"  events                       : [cyan]{metrics.total}[/cyan]")
+    console.print(f"  precision / recall / F1      : {metrics.precision:.4f} / "
+                  f"{metrics.recall:.4f} / {metrics.f1:.4f}")
+    console.print(f"  incident recall              : {metrics.incident_recall:.4f}")
+    console.print(f"  alerts                       : {metrics.alert_count}")
+    console.print(f"  alerts per 1,000 events      : {metrics.alerts_per_1000_events:.4f}")
+    console.print(f"  false alerts per 1,000 events: {metrics.false_alerts_per_1000_events:.4f}")
+    console.print(f"  alerts per true incident     : {metrics.alerts_per_true_incident:.4f}")
+    if failures:
+        raise click.ClickException("benchmark quality gate failed: " + "; ".join(failures))
 
 
 @main.command("health")
