@@ -1,0 +1,57 @@
+# Reference OpenTelemetry Collector pipeline for LogSight-AI.
+# The debug exporters make local validation observable; replace them with
+# authenticated, deployment-owned trace/log/metric backends before production.
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+  attributes/log-correlation:
+    actions:
+      - key: service.name
+        action: insert
+        value: logsight-ai
+
+connectors:
+  spanmetrics:
+    dimensions:
+      - name: service.name
+      - name: http.route
+
+exporters:
+  debug:
+    verbosity: basic
+
+service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [spanmetrics, debug]
+    metrics:
+      receivers: [otlp, spanmetrics]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/log-correlation, batch]
+      exporters: [debug]
