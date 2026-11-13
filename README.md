@@ -58,6 +58,7 @@ flowchart LR
 - `logsight.redis_control.RedisAdmissionController` — atomic Redis deduplication and per-service rate-limit admission control.
 - `logsight.distributed.CeleryInferenceDispatcher` — bounded JSON Celery dispatch for asynchronous embedding work.
 - `logsight.investigator.IncidentInvestigator` — retrieval-grounded, version-pinned incident runbook investigator with evidence citations.
+- `logsight.benchmarking` — versioned labeled-corpus evaluator for precision, recall, incident coverage, and alert burden.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -94,6 +95,21 @@ pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### Labeled benchmark corpus
+
+The synthetic, versioned benchmark corpus provides a reproducible regression signal for
+precision, recall, incident coverage, and alert burden. Run it directly or apply
+deployment-owned quality gates:
+
+```bash
+logsight benchmark
+logsight benchmark --min-precision 0.95 --min-recall 0.90 \
+  --max-alerts-per-1000-events 250
+```
+
+The gate values are not universal production claims: choose them from a reviewed,
+representative corpus and promotion policy. See [labeled benchmark controls](docs/LABELED_BENCHMARKS.md).
 
 ### Incident investigator
 
@@ -266,7 +282,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Celery/Ray distributed inference workers
 - [x] Helm chart with HPA/PDB/network policies
 - [x] RAG incident investigator with versioned runbooks/commits
-- [ ] Labeled benchmark corpus with precision/recall and alert-burden metrics
+- [x] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
 ## Documentation
 
@@ -278,6 +294,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [Incident investigator](docs/INCIDENT_INVESTIGATOR.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
+- [Labeled benchmark corpus](docs/LABELED_BENCHMARKS.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)
 - [Security policy](SECURITY.md)
 

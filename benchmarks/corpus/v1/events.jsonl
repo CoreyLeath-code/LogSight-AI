@@ -1,0 +1,16 @@
+{"id":"steady-001","level":"INFO","message":"checkout request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-002","level":"INFO","message":"catalog request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-003","level":"WARNING","message":"cache refresh deferred until next scheduled cycle","is_anomaly":false,"incident_id":null}
+{"id":"steady-004","level":"INFO","message":"worker heartbeat received from primary consumer","is_anomaly":false,"incident_id":null}
+{"id":"steady-005","level":"INFO","message":"inventory request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-006","level":"WARNING","message":"connection retry completed before request timeout","is_anomaly":false,"incident_id":null}
+{"id":"steady-007","level":"INFO","message":"payment request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-008","level":"INFO","message":"queue consumer processed the expected message batch","is_anomaly":false,"incident_id":null}
+{"id":"steady-009","level":"INFO","message":"session request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-010","level":"WARNING","message":"cache entry refreshed after normal expiry interval","is_anomaly":false,"incident_id":null}
+{"id":"steady-011","level":"INFO","message":"profile request completed within normal latency","is_anomaly":false,"incident_id":null}
+{"id":"steady-012","level":"INFO","message":"worker heartbeat received from secondary consumer","is_anomaly":false,"incident_id":null}
+{"id":"db-001","level":"ERROR","message":"database connection pool timeout during checkout","is_anomaly":true,"incident_id":"database-timeout"}
+{"id":"db-002","level":"ERROR","message":"database connection pool timeout during payment","is_anomaly":true,"incident_id":"database-timeout"}
+{"id":"queue-001","level":"ERROR","message":"queue consumer lag exceeded the service objective","is_anomaly":true,"incident_id":"queue-backlog"}
+{"id":"queue-002","level":"CRITICAL","message":"queue consumer stopped acknowledging new messages","is_anomaly":true,"incident_id":"queue-backlog"}
