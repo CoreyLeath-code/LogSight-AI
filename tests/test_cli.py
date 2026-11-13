@@ -123,3 +123,46 @@ class TestInvestigateCommand:
 
         assert result.exit_code == 1
         assert "7-64 character identifier" in result.output
+
+
+
+class TestBenchmarkCommand:
+    def test_reports_quality_and_alert_burden_metrics(self, tmp_path):
+        corpus = tmp_path / "corpus.jsonl"
+        corpus.write_text(
+            "\n".join(
+                [
+                    '{"id":"normal","level":"INFO","message":"same length message","is_anomaly":false,"incident_id":null}',
+                    '{"id":"alert","level":"ERROR","message":"same length message","is_anomaly":true,"incident_id":"incident-a"}',
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        result = CliRunner().invoke(main, ["benchmark", "--corpus", str(corpus)])
+
+        assert result.exit_code == 0
+        assert "Labeled benchmark results" in result.output
+        assert "precision / recall / F1" in result.output
+        assert "alerts per 1,000 events" in result.output
+
+    def test_fails_when_a_quality_gate_is_not_met(self, tmp_path):
+        corpus = tmp_path / "corpus.jsonl"
+        corpus.write_text(
+            '{"id":"normal","level":"INFO","message":"same length message","is_anomaly":false,"incident_id":null}',
+            encoding="utf-8",
+        )
+
+        result = CliRunner().invoke(
+            main,
+            [
+                "benchmark",
+                "--corpus",
+                str(corpus),
+                "--min-recall",
+                "0.1",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "benchmark quality gate failed" in result.output
