@@ -93,7 +93,7 @@ def create_app() -> Any:
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload) -> dict[str, Any]:
         event, result, task_id = await _process(payload)
-        response = {"event": event.to_dict(), "anomaly": asdict(result)}
+        response: dict[str, Any] = {"event": event.to_dict(), "anomaly": asdict(result)}
         if task_id is not None:
             response["inference_task_id"] = task_id
         return response
@@ -103,7 +103,7 @@ def create_app() -> Any:
         results = []
         for item in payload.logs:
             event, result, task_id = await _process(item)
-            response = {"event": event.to_dict(), "anomaly": asdict(result)}
+            response: dict[str, Any] = {"event": event.to_dict(), "anomaly": asdict(result)}
             if task_id is not None:
                 response["inference_task_id"] = task_id
             results.append(response)
