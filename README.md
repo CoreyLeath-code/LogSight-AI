@@ -49,7 +49,8 @@ flowchart LR
 ## New enterprise interfaces
 
 - `logsight.enterprise.EnrichedLog` — normalized event schema with service/source/host, trace ID, span ID, template, fingerprint, and attributes.
-- `logsight.enterprise.extract_template()` — dependency-free template baseline; replace with Drain3 for high-cardinality production parsing.
+- `logsight.enterprise.extract_template()` — dependency-free template baseline.
+- `logsight.templates.Drain3TemplateParser` — optional stateful Drain3 adapter selected through `LOGSIGHT_TEMPLATE_PARSER=drain3`.
 - `logsight.enterprise.semantic_features()` — deterministic feature baseline; explicitly **not** represented as a learned embedding.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
@@ -85,6 +86,20 @@ pip install -e ".[api,kafka,observability,ai,parsing]"
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
 
+### Drain3 template parsing
+
+The default `baseline` parser remains deterministic and dependency-free. Enable Drain3 only
+after installing the `parsing` extra and providing a deployment-owned configuration file:
+
+```bash
+export LOGSIGHT_TEMPLATE_PARSER=drain3
+export LOGSIGHT_DRAIN3_CONFIG=/etc/logsight/drain3.ini
+```
+
+Drain3 learns templates in memory and is serialized within each API worker. A multi-worker
+deployment must define how its parser state is persisted and coordinated; this adapter does
+not claim cross-worker template consistency on its own.
+
 ## Current detection contract
 
 The original analyzer uses explainable statistical heuristics: message-length z-score outliers, direct ERROR/CRITICAL rules, and elevated error-rate windows. These are not presented as calibrated incident probabilities. The enterprise layer preserves that evidence-first behavior while adding normalized event context and pluggable AI interfaces.
@@ -111,7 +126,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] FastAPI async gateway
 - [x] Prometheus endpoint and OpenTelemetry helper
 - [x] Enterprise Docker Compose reference stack
-- [ ] Drain3 production parser adapter
+- [x] Drain3 production parser adapter
 - [ ] Sentence-Transformers/LogBERT embedding worker
 - [ ] ONNX Runtime inference worker
 - [ ] Redis-backed deduplication/rate limiting
