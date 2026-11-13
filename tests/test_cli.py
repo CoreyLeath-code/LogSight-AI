@@ -72,7 +72,6 @@ class TestStdinCommand:
         assert "no root cause is inferred" in " ".join(result.output.split())
 
 
-
 class TestInvestigateCommand:
     def test_returns_versioned_grounded_citation(self, tmp_path):
         runbook = tmp_path / "database.md"
