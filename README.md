@@ -52,6 +52,7 @@ flowchart LR
 - `logsight.enterprise.extract_template()` — dependency-free template baseline.
 - `logsight.templates.Drain3TemplateParser` — optional stateful Drain3 adapter selected through `LOGSIGHT_TEMPLATE_PARSER=drain3`.
 - `logsight.enterprise.semantic_features()` — deterministic feature baseline; explicitly **not** represented as a learned embedding.
+- `logsight.embeddings.EmbeddingWorker` — bounded off-path Sentence-Transformers batch worker with model provenance and output validation.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -85,6 +86,22 @@ pip install -e ".[api,kafka,observability,ai,parsing]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### Embedding worker
+
+The optional Sentence-Transformers worker batches normalized log messages outside the
+ingestion request path. It validates batch size, message size, vector count, finite values,
+and dimensional consistency before results can be stored or indexed. Configure the model
+and upper batch bound explicitly:
+
+```bash
+export LOGSIGHT_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+export LOGSIGHT_EMBEDDING_BATCH_SIZE=64
+```
+
+Model artifacts must be provisioned through the deployment's approved artifact path.
+The worker does not download models during an ingestion request, perform distributed
+scheduling, or claim that a Sentence-Transformers model is a LogBERT anomaly detector.
 
 ### Drain3 template parsing
 
@@ -127,7 +144,8 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Prometheus endpoint and OpenTelemetry helper
 - [x] Enterprise Docker Compose reference stack
 - [x] Drain3 production parser adapter
-- [ ] Sentence-Transformers/LogBERT embedding worker
+- [x] Sentence-Transformers embedding worker
+- [ ] LogBERT anomaly-model adapter
 - [ ] ONNX Runtime inference worker
 - [ ] Redis-backed deduplication/rate limiting
 - [ ] OTel Collector deployment and trace-log correlation pipeline
