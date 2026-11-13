@@ -223,10 +223,7 @@ def investigate_cmd(
             f"\n[bold]{escape(citation.title)}[/bold] "
             f"({escape(citation.identifier)} v{escape(citation.version)})"
         )
-        console.print(
-            f"  source   : {escape(citation.path)} @ "
-            f"{escape(citation.revision)}"
-        )
+        console.print(f"  source   : {escape(citation.path)} @ {escape(citation.revision)}")
         console.print(f"  digest   : {citation.digest}")
         console.print(f"  score    : {citation.score:.4f}")
         console.print(f"  excerpt  : {escape(citation.excerpt)}")
