@@ -68,9 +68,13 @@ def test_admission_rejects_invalid_configuration_and_responses() -> None:
     missing_fingerprint = event("INFO accepted")
     missing_fingerprint.fingerprint = None
     with pytest.raises(ValueError, match="fingerprint"):
-        asyncio.run(RedisAdmissionController(FakeRedis([1, "accepted"])).admit(missing_fingerprint, "x"))
+        asyncio.run(
+            RedisAdmissionController(FakeRedis([1, "accepted"])).admit(missing_fingerprint, "x")
+        )
     with pytest.raises(ValueError, match="scope"):
-        asyncio.run(RedisAdmissionController(FakeRedis([1, "accepted"])).admit(event("INFO accepted"), ""))
+        asyncio.run(
+            RedisAdmissionController(FakeRedis([1, "accepted"])).admit(event("INFO accepted"), "")
+        )
 
     invalid_length = RedisAdmissionController(FakeRedis([1]))
     with pytest.raises(RuntimeError, match="invalid response"):
@@ -86,7 +90,9 @@ def test_redis_controller_is_optional_without_url(monkeypatch: pytest.MonkeyPatc
     assert build_redis_controller() is None
 
 
-def test_redis_controller_builds_from_explicit_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_redis_controller_builds_from_explicit_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     created: dict[str, object] = {}
 
     class FakeRedisFactory:
