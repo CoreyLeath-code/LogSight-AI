@@ -19,7 +19,9 @@ def test_collector_configuration_exposes_otlp_signal_pipelines() -> None:
 
 
 def test_correlation_never_overwrites_log_supplied_identifiers() -> None:
-    event = enrich(parse_line("ERROR request failed trace_id=upstream span_id=child"))
+    event = enrich(parse_line("ERROR request failed"))
+    event.trace_id = "upstream"
+    event.span_id = "child"
 
     correlated = correlate_with_active_span(event)
 
