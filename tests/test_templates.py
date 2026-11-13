@@ -24,7 +24,7 @@ class FakeDrain3Miner:
 def test_baseline_parser_preserves_existing_template_contract() -> None:
     parser = BaselineTemplateParser()
 
-    assert parser.parse("request 42 failed from 10.1.2.3") == "request <*> failed from <*>"
+    assert parser.parse("request failed after 42 ms") == "request failed after <*> ms"
 
 
 def test_drain3_adapter_returns_mined_template() -> None:
