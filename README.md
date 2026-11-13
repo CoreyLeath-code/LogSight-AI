@@ -53,6 +53,7 @@ flowchart LR
 - `logsight.templates.Drain3TemplateParser` — optional stateful Drain3 adapter selected through `LOGSIGHT_TEMPLATE_PARSER=drain3`.
 - `logsight.enterprise.semantic_features()` — deterministic feature baseline; explicitly **not** represented as a learned embedding.
 - `logsight.embeddings.EmbeddingWorker` — bounded off-path Sentence-Transformers batch worker with model provenance and output validation.
+- `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -103,6 +104,22 @@ Model artifacts must be provisioned through the deployment's approved artifact p
 The worker does not download models during an ingestion request, perform distributed
 scheduling, or claim that a Sentence-Transformers model is a LogBERT anomaly detector.
 
+### ONNX inference worker
+
+The optional ONNX worker accepts only aligned, finite feature batches matching a
+deployment-declared input dimension. It validates output count and shape before returning
+model scores, but it deliberately does not decide model thresholds or alert policy:
+
+```bash
+export LOGSIGHT_ONNX_MODEL_PATH=/models/log-anomaly-detector.onnx
+export LOGSIGHT_ONNX_INPUT_DIMENSION=32
+export LOGSIGHT_ONNX_BATCH_SIZE=64
+```
+
+Use immutable model artifacts and record the model digest with each deployment. The worker
+uses CPU ONNX Runtime by default; accelerator/provider selection and distributed inference
+remain explicit follow-on deployment work.
+
 ### Drain3 template parsing
 
 The default `baseline` parser remains deterministic and dependency-free. Enable Drain3 only
@@ -146,7 +163,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Drain3 production parser adapter
 - [x] Sentence-Transformers embedding worker
 - [ ] LogBERT anomaly-model adapter
-- [ ] ONNX Runtime inference worker
+- [x] ONNX Runtime inference worker
 - [ ] Redis-backed deduplication/rate limiting
 - [ ] OTel Collector deployment and trace-log correlation pipeline
 - [ ] Celery/Ray distributed inference workers
