@@ -53,6 +53,7 @@ flowchart LR
 - `logsight.templates.Drain3TemplateParser` — optional stateful Drain3 adapter selected through `LOGSIGHT_TEMPLATE_PARSER=drain3`.
 - `logsight.enterprise.semantic_features()` — deterministic feature baseline; explicitly **not** represented as a learned embedding.
 - `logsight.embeddings.EmbeddingWorker` — bounded off-path Sentence-Transformers batch worker with model provenance and output validation.
+- `logsight.logbert.LogBertAnomalyAdapter` — bounded local-checkpoint masked-LM adapter with calibrated loss-threshold decisions.
 - `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
@@ -103,6 +104,22 @@ export LOGSIGHT_EMBEDDING_BATCH_SIZE=64
 Model artifacts must be provisioned through the deployment's approved artifact path.
 The worker does not download models during an ingestion request, perform distributed
 scheduling, or claim that a Sentence-Transformers model is a LogBERT anomaly detector.
+
+### LogBERT anomaly adapter
+
+The optional adapter accepts a local Hugging Face masked-LM checkpoint that is compatible
+with the LogBERT scoring contract. It uses per-template masked-LM loss and a deployment-
+calibrated threshold; the score is not a probability or an incident decision on its own:
+
+```bash
+export LOGSIGHT_LOGBERT_MODEL_PATH=/models/logbert
+export LOGSIGHT_LOGBERT_LOSS_THRESHOLD=2.4
+export LOGSIGHT_LOGBERT_BATCH_SIZE=64
+```
+
+The model directory must be provisioned before startup. The adapter uses local files only
+and does not download a checkpoint during processing. Threshold calibration, false-positive
+analysis, and alert policy remain deployment responsibilities.
 
 ### ONNX inference worker
 
@@ -162,7 +179,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Enterprise Docker Compose reference stack
 - [x] Drain3 production parser adapter
 - [x] Sentence-Transformers embedding worker
-- [ ] LogBERT anomaly-model adapter
+- [x] LogBERT anomaly-model adapter
 - [x] ONNX Runtime inference worker
 - [ ] Redis-backed deduplication/rate limiting
 - [ ] OTel Collector deployment and trace-log correlation pipeline
