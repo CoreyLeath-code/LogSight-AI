@@ -44,7 +44,7 @@ class TransformersMaskedLMBackend:
         self._tokenizer = AutoTokenizer.from_pretrained(
             self.model_path,
             local_files_only=True,
-            revision="local",
+            revision="local",  # nosec B615 - local_files_only uses a provisioned directory
         )
         self._model = AutoModelForMaskedLM.from_pretrained(
             self.model_path,
