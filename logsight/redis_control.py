@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -71,8 +72,9 @@ class RedisAdmissionController:
             raise ValueError("event fingerprint is required for Redis admission")
         if not scope:
             raise ValueError("scope is required for Redis admission")
+        scope_digest = hashlib.sha256(scope.encode("utf-8")).hexdigest()
         dedup_key = f"{self.key_prefix}:dedup:{event.fingerprint}"
-        rate_key = f"{self.key_prefix}:rate:{scope}"
+        rate_key = f"{self.key_prefix}:rate:{scope_digest}"
         response = await self.client.eval(
             _ADMIT_SCRIPT,
             2,
@@ -85,12 +87,12 @@ class RedisAdmissionController:
         if len(response) != 2:
             raise RuntimeError("Redis admission script returned an invalid response")
         accepted, reason = response
-        if not isinstance(reason, str) or reason not in {
+        if accepted not in (0, 1) or not isinstance(reason, str) or reason not in {
             "accepted",
             "duplicate",
             "rate_limited",
         }:
-            raise RuntimeError("Redis admission script returned an unknown reason")
+            raise RuntimeError("Redis admission script returned an invalid response")
         return AdmissionDecision(accepted=bool(accepted), reason=reason)
 
 
