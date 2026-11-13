@@ -52,6 +52,7 @@ flowchart LR
 - `logsight.enterprise.extract_template()` — dependency-free template baseline.
 - `logsight.templates.Drain3TemplateParser` — optional stateful Drain3 adapter selected through `LOGSIGHT_TEMPLATE_PARSER=drain3`.
 - `logsight.enterprise.semantic_features()` — deterministic feature baseline; explicitly **not** represented as a learned embedding.
+- `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -128,7 +129,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Enterprise Docker Compose reference stack
 - [x] Drain3 production parser adapter
 - [ ] Sentence-Transformers/LogBERT embedding worker
-- [ ] ONNX Runtime inference worker
+- [x] ONNX Runtime inference worker
 - [ ] Redis-backed deduplication/rate limiting
 - [ ] OTel Collector deployment and trace-log correlation pipeline
 - [ ] Celery/Ray distributed inference workers
