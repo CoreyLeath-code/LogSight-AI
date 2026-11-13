@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "corpus_version": "v1",
+  "record_count": 16,
+  "purpose": "Deterministic quality and alert-burden regression evaluation.",
+  "data_classification": "Synthetic examples only; no customer or production log data.",
+  "label_definition": {
+    "is_anomaly": "True when a record belongs to the documented incident scenario.",
+    "incident_id": "Stable grouping identifier required for every anomalous record."
+  },
+  "maintenance": "Changes require review, a version bump, and updated expected metrics."
+}
