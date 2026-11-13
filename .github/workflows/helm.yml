@@ -1,0 +1,23 @@
+name: Helm
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v4
+      - run: helm lint charts/logsight-ai
+      - run: helm template logsight-ai charts/logsight-ai --namespace logsight > rendered-manifests.yaml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: helm-manifests
+          path: rendered-manifests.yaml
