@@ -36,7 +36,9 @@ class InferenceRequest:
         )
 
     @classmethod
-    def from_payload(cls, payload: dict[str, object], *, max_message_chars: int) -> InferenceRequest:
+    def from_payload(
+        cls, payload: dict[str, object], *, max_message_chars: int
+    ) -> InferenceRequest:
         expected = {"fingerprint", "message", "trace_id", "span_id"}
         if set(payload) != expected:
             raise ValueError("distributed inference payload has an unexpected shape")
@@ -82,9 +84,7 @@ class InferenceRequest:
 class TaskSender(Protocol):
     """Minimal Celery app contract used by the enqueue adapter."""
 
-    def send_task(
-        self, name: str, args: list[object], *, queue: str
-    ) -> Any:
+    def send_task(self, name: str, args: list[object], *, queue: str) -> Any:
         """Submit a named task."""
 
 
@@ -114,7 +114,9 @@ class CeleryInferenceDispatcher:
         if not 1 <= len(events) <= self.max_batch_size:
             raise ValueError(f"batch size must be between 1 and {self.max_batch_size}")
         payload = [
-            InferenceRequest.from_event(event, max_message_chars=self.max_message_chars).to_payload()
+            InferenceRequest.from_event(
+                event, max_message_chars=self.max_message_chars
+            ).to_payload()
             for event in events
         ]
         result = self.app.send_task(_TASK_NAME, [payload], queue=self.queue)
@@ -168,9 +170,9 @@ def create_celery_app() -> Any:
             InferenceRequest.from_payload(payload, max_message_chars=max_message_chars)
             for payload in payloads
         ]
-        results: list[EmbeddedLog] = build_embedding_worker(
-            max_batch_size=max_batch_size
-        ).embed([request.to_event() for request in requests])
+        results: list[EmbeddedLog] = build_embedding_worker(max_batch_size=max_batch_size).embed(
+            [request.to_event() for request in requests]
+        )
         return [asdict(result) for result in results]
 
     return app
