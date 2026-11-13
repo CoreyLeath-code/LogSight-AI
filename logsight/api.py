@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections import deque
 from dataclasses import asdict
@@ -67,7 +68,7 @@ async def _process(item: LogPayload) -> tuple[EnrichedLog, Any, str | None]:
         if result.score >= 0.5:
             _metrics["logsight_anomalies_total"] += 1
         task_id = (
-            _inference_dispatcher.submit_embeddings([event])
+            await asyncio.to_thread(_inference_dispatcher.submit_embeddings, [event])
             if _inference_dispatcher is not None
             else None
         )
