@@ -18,6 +18,10 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### Production status
+
+LogSight-AI is a production-oriented engineering foundation; it is **not yet approved for an internet-facing, multi-tenant, or consequential production deployment**. The completed roadmap below establishes interfaces and controls. The remaining work is governed by the [production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md), whose exit evidence—not checkbox completion alone—defines promotion.
+
 ## Enterprise architecture
 
 ```mermaid
@@ -265,7 +269,7 @@ logsight analyze application.log --explain
 
 Pull requests retain the existing formatting, linting, strict typing, unit/integration/CLI tests, coverage gate, package/container validation, Bandit, dependency audit, SBOM, CodeQL, and reproducible benchmark controls. Enterprise changes should include contract tests for adapters and load tests before production rollout.
 
-## Roadmap
+## Completed foundation roadmap
 
 - [x] Normalized enterprise event contract
 - [x] Kafka/Redpanda ingestion adapter
@@ -284,9 +288,37 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] RAG incident investigator with versioned runbooks/commits
 - [x] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
+## Production-readiness roadmap
+
+The next roadmap focuses on proof that the whole service can be safely operated,
+not additional adapters. All items remain open until their required exit evidence
+has been reviewed and linked from a release record.
+
+- [ ] **Phase 0 — Ownership and release boundary:** accountable owners, SLOs,
+  on-call/incident policy, and rehearsed rollback.
+- [ ] **Phase 1 — API trust boundary:** workload authentication, tenant/service
+  authorization, protected telemetry, audit events, and request limits.
+- [ ] **Phase 2 — Data governance:** pre-storage redaction, retention/deletion,
+  encryption, secrets management, and data-access controls.
+- [ ] **Phase 3 — Durable data path:** Kafka-backed acceptance, ClickHouse
+  persistence, schema/migrations, idempotency, backpressure, and replay.
+- [ ] **Phase 4 — Reliable operations:** dependency-aware readiness, durable
+  telemetry, SLO dashboards/alerts, HA/failure testing, and backup/restore.
+- [ ] **Phase 5 — Secure delivery:** locked dependencies, digest-pinned signed
+  artifacts, SBOM/provenance, deployment policy, and protected promotion.
+- [ ] **Phase 6 — Detection quality:** representative de-identified corpus,
+  approved quality thresholds, drift review, and human operational review.
+
+See the [detailed production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md)
+for task-level exit criteria, required operational evidence, and the launch gate.
+The first implementation milestone is **secure, durable ingestion**: authenticated
+API access, redaction, Kafka-backed acceptance, ClickHouse persistence, and
+dependency-aware readiness.
+
 ## Documentation
 
 - [Production audit](docs/AUDIT.md)
+- [Production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md)
 - [Architecture](docs/architecture.md)
 - [Collector correlation](docs/OTEL_COLLECTOR.md)
 - [Celery inference workers](docs/CELERY_WORKERS.md)
