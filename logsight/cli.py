@@ -11,7 +11,11 @@ from rich.markup import escape
 from rich.table import Table
 
 from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike_details
-from logsight.benchmarking import evaluate_labeled_corpus, load_labeled_corpus, quality_gate_failures
+from logsight.benchmarking import (
+    evaluate_labeled_corpus,
+    load_labeled_corpus,
+    quality_gate_failures,
+)
 from logsight.investigator import IncidentInvestigator, RunbookRepository
 from logsight.parser import parse_file, parse_lines
 from logsight.reasoning import EvidenceExplanation, explain_report
@@ -285,8 +289,10 @@ def benchmark_cmd(
 
     console.print("[bold]Labeled benchmark results[/bold]")
     console.print(f"  events                       : [cyan]{metrics.total}[/cyan]")
-    console.print(f"  precision / recall / F1      : {metrics.precision:.4f} / "
-                  f"{metrics.recall:.4f} / {metrics.f1:.4f}")
+    console.print(
+        f"  precision / recall / F1      : {metrics.precision:.4f} / "
+        f"{metrics.recall:.4f} / {metrics.f1:.4f}"
+    )
     console.print(f"  incident recall              : {metrics.incident_recall:.4f}")
     console.print(f"  alerts                       : {metrics.alert_count}")
     console.print(f"  alerts per 1,000 events      : {metrics.alerts_per_1000_events:.4f}")
