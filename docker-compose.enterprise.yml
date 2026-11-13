@@ -3,16 +3,19 @@ services:
     build:
       context: .
       args:
-        INSTALL_EXTRAS: api
+        INSTALL_EXTRAS: api,redis
     image: logsight-ai:enterprise
     entrypoint: []
     command: ["uvicorn", "logsight.api:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       LOGSIGHT_WINDOW: "500"
+      LOGSIGHT_REDIS_URL: redis://redis:6379/0
+      LOGSIGHT_RATE_LIMIT: "120"
+      LOGSIGHT_RATE_WINDOW_SECONDS: "60"
+      LOGSIGHT_DEDUP_TTL_SECONDS: "300"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       CLICKHOUSE_URL: http://clickhouse:8123
       QDRANT_URL: http://qdrant:6333
-      REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
     depends_on:

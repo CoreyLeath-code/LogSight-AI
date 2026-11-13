@@ -9,6 +9,7 @@ from typing import Any
 
 from .enterprise import EnrichedLog, enrich, score_event
 from .parser import parse_line
+from .redis_control import RedisAdmissionController, build_redis_controller
 from .templates import TemplateParser, build_template_parser
 
 try:
@@ -38,15 +39,21 @@ class BatchPayload(BaseModel):  # type: ignore[misc]
 _recent: deque[EnrichedLog] = deque(maxlen=int(os.getenv("LOGSIGHT_WINDOW", "500")))
 _metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
 _template_parser: TemplateParser = build_template_parser()
+_admission_controller: RedisAdmissionController | None = build_redis_controller()
 
 
-def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
+async def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
     event = enrich(
         parse_line(item.line),
         service=item.service,
         source=item.source,
         host=item.host,
     )
+    if _admission_controller is not None:
+        decision = await _admission_controller.admit(event, item.service)
+        if not decision.accepted:
+            status_code = 409 if decision.reason == "duplicate" else 429
+            raise HTTPException(status_code=status_code, detail=decision.reason)
     event.template = _template_parser.parse(event.message)
     _recent.append(event)
     result = score_event(event, list(_recent))
@@ -72,14 +79,14 @@ def create_app() -> Any:
 
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload) -> dict[str, Any]:
-        event, result = _process(payload)
+        event, result = await _process(payload)
         return {"event": event.to_dict(), "anomaly": asdict(result)}
 
     @app.post("/v1/logs/batch")
     async def ingest_batch(payload: BatchPayload) -> dict[str, Any]:
         results = []
         for item in payload.logs:
-            event, result = _process(item)
+            event, result = await _process(item)
             results.append({"event": event.to_dict(), "anomaly": asdict(result)})
         return {"count": len(results), "results": results}
 

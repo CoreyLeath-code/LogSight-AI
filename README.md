@@ -55,6 +55,7 @@ flowchart LR
 - `logsight.embeddings.EmbeddingWorker` — bounded off-path Sentence-Transformers batch worker with model provenance and output validation.
 - `logsight.logbert.LogBertAnomalyAdapter` — bounded local-checkpoint masked-LM adapter with calibrated loss-threshold decisions.
 - `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
+- `logsight.redis_control.RedisAdmissionController` — atomic Redis deduplication and per-service rate-limit admission control.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -84,10 +85,30 @@ Services exposed locally:
 Install optional Python integrations with:
 
 ```bash
-pip install -e ".[api,kafka,observability,ai,parsing]"
+pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### Redis admission controls
+
+Redis admission controls are disabled unless `LOGSIGHT_REDIS_URL` is configured. Once
+enabled, one atomic Lua script rejects duplicate fingerprints before consuming a per-service
+rate-limit token. The scope is hashed before it becomes a Redis key, and rejected events do
+not enter the in-memory analysis window:
+
+```bash
+export LOGSIGHT_REDIS_URL=redis://localhost:6379/0
+export LOGSIGHT_RATE_LIMIT=120
+export LOGSIGHT_RATE_WINDOW_SECONDS=60
+export LOGSIGHT_DEDUP_TTL_SECONDS=300
+```
+
+The API returns `409` for a duplicate and `429` for an exhausted rate budget. Redis
+availability is therefore a deployment requirement when this control is enabled; use a
+durable, highly available Redis deployment and monitor connection failures. Batch ingestion
+is processed in order and is not transactional: accepted entries remain accepted if a later
+entry is rejected.
 
 ### Embedding worker
 
@@ -181,7 +202,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] Sentence-Transformers embedding worker
 - [x] LogBERT anomaly-model adapter
 - [x] ONNX Runtime inference worker
-- [ ] Redis-backed deduplication/rate limiting
+- [x] Redis-backed deduplication/rate limiting
 - [ ] OTel Collector deployment and trace-log correlation pipeline
 - [ ] Celery/Ray distributed inference workers
 - [ ] Helm chart with HPA/PDB/network policies
