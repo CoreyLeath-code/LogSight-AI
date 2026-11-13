@@ -55,9 +55,7 @@ def test_adapter_rejects_invalid_input_and_backend_output() -> None:
 
 
 def test_adapter_rejects_unexpected_score_count() -> None:
-    adapter = LogBertAnomalyAdapter(
-        FakeLossBackend([0.1]), model_name="test", loss_threshold=1.0
-    )
+    adapter = LogBertAnomalyAdapter(FakeLossBackend([0.1]), model_name="test", loss_threshold=1.0)
 
     events = [event("INFO one"), event("INFO two")]
     with pytest.raises(RuntimeError, match="unexpected score count"):
