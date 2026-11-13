@@ -56,6 +56,4 @@ def test_request_rejects_payload_shape_and_oversized_message() -> None:
         InferenceRequest.from_payload({}, max_message_chars=10)
 
     with pytest.raises(ValueError, match="within"):
-        InferenceRequest(
-            fingerprint="event", message="too long"
-        ).validated(max_message_chars=3)
+        InferenceRequest(fingerprint="event", message="too long").validated(max_message_chars=3)
