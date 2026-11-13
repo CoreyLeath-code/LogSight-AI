@@ -64,9 +64,7 @@ def test_investigation_ranks_grounded_citations_deterministically(tmp_path) -> N
     )
 
     assert investigation.revision == "0123456789abcdef"
-    assert [citation.identifier for citation in investigation.citations] == [
-        "database-timeout"
-    ]
+    assert [citation.identifier for citation in investigation.citations] == ["database-timeout"]
     citation = investigation.citations[0]
     assert citation.version == "1.2.0"
     assert citation.digest
@@ -144,9 +142,7 @@ def test_rejects_oversized_runbook(tmp_path) -> None:
 )
 def test_rejects_invalid_queries_and_limits(tmp_path, query: str, limit: int, message: str) -> None:
     _write_runbook(tmp_path, "database.md")
-    investigator = IncidentInvestigator(
-        RunbookRepository(tmp_path, revision="abcdef1").load()
-    )
+    investigator = IncidentInvestigator(RunbookRepository(tmp_path, revision="abcdef1").load())
 
     with pytest.raises(ValueError, match=message):
         investigator.investigate(query, limit=limit)
