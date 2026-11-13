@@ -70,3 +70,57 @@ class TestStdinCommand:
         assert "level=ERROR" in result.output
         assert "single-signal" in result.output
         assert "no root cause is inferred" in " ".join(result.output.split())
+
+
+
+class TestInvestigateCommand:
+    def test_returns_versioned_grounded_citation(self, tmp_path):
+        runbook = tmp_path / "database.md"
+        runbook.write_text(
+            "\\n".join(
+                [
+                    "---",
+                    "id: database-timeout",
+                    "title: Database timeout response",
+                    "version: 1.0.0",
+                    "---",
+                    "Confirm database connection saturation before escalating.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        result = CliRunner().invoke(
+            main,
+            [
+                "investigate",
+                "database timeout",
+                "--runbooks",
+                str(tmp_path),
+                "--revision",
+                "abcdef1",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "Investigation provenance" in result.output
+        assert "database-timeout v1.0.0" in result.output
+        assert "abcdef1" in result.output
+        assert "digest" in result.output.lower()
+
+    def test_rejects_invalid_runbook_revision(self, tmp_path):
+        result = CliRunner().invoke(
+            main,
+            [
+                "investigate",
+                "database timeout",
+                "--runbooks",
+                str(tmp_path),
+                "--revision",
+                "short",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "7-64 character identifier" in result.output
