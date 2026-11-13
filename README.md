@@ -61,6 +61,7 @@ flowchart LR
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
 - `logsight.api` — optional FastAPI gateway with `/health`, `/metrics`, `/v1/logs`, `/v1/logs/batch`, and `/v1/logs/recent`.
 - `logsight.observability.span()` — no-op-safe OpenTelemetry instrumentation helper.
+- `logsight.observability.correlate_with_active_span()` — attaches active trace/span IDs to normalized events without overwriting supplied correlation fields.
 
 ## Enterprise local stack
 
@@ -79,6 +80,7 @@ Services exposed locally:
 | ClickHouse | 8123 | Log analytics/storage |
 | Qdrant | 6333 | Vector similarity search |
 | Redis | 6379 | Cache/dedup/rate limiting foundation |
+| OTel Collector | 4317 / 4318 | OTLP trace and log intake |
 | Prometheus | 9090 | Metrics collection |
 | Grafana | 3000 | Dashboards |
 
@@ -89,6 +91,18 @@ pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### OpenTelemetry Collector and trace–log correlation
+
+The enterprise reference stack includes an OTLP Collector. Set
+`LOGSIGHT_OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` to export ingestion
+spans. The API preserves trace/span IDs found in log content and supplies missing
+IDs from its active ingestion span, making each normalized event joinable to its
+trace. The supplied Collector configuration uses a debug exporter for local
+validation only; configure authenticated production backends before promotion.
+
+See [Collector deployment and correlation](docs/OTEL_COLLECTOR.md) for validation
+and production-promotion guidance.
 
 ### Redis admission controls
 
@@ -203,7 +217,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] LogBERT anomaly-model adapter
 - [x] ONNX Runtime inference worker
 - [x] Redis-backed deduplication/rate limiting
-- [ ] OTel Collector deployment and trace-log correlation pipeline
+- [x] OTel Collector deployment and trace-log correlation pipeline
 - [ ] Celery/Ray distributed inference workers
 - [ ] Helm chart with HPA/PDB/network policies
 - [ ] RAG incident investigator with versioned runbooks/commits
@@ -213,6 +227,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 
 - [Production audit](docs/AUDIT.md)
 - [Architecture](docs/architecture.md)
+- [Collector correlation](docs/OTEL_COLLECTOR.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)
