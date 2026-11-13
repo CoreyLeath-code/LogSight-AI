@@ -7,6 +7,7 @@ from collections import deque
 from dataclasses import asdict
 from typing import Any
 
+from .distributed import CeleryInferenceDispatcher, build_celery_dispatcher
 from .enterprise import EnrichedLog, enrich, score_event
 from .observability import configure_tracing, correlate_with_active_span, span
 from .parser import parse_line
@@ -41,9 +42,10 @@ _recent: deque[EnrichedLog] = deque(maxlen=int(os.getenv("LOGSIGHT_WINDOW", "500
 _metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
 _template_parser: TemplateParser = build_template_parser()
 _admission_controller: RedisAdmissionController | None = build_redis_controller()
+_inference_dispatcher: CeleryInferenceDispatcher | None = build_celery_dispatcher()
 
 
-async def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
+async def _process(item: LogPayload) -> tuple[EnrichedLog, Any, str | None]:
     with span("logsight.ingest", service=item.service, source=item.source) as _:
         event = correlate_with_active_span(
             enrich(
@@ -64,7 +66,12 @@ async def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
         _metrics["logsight_ingested_total"] += 1
         if result.score >= 0.5:
             _metrics["logsight_anomalies_total"] += 1
-        return event, result
+        task_id = (
+            _inference_dispatcher.submit_embeddings([event])
+            if _inference_dispatcher is not None
+            else None
+        )
+        return event, result, task_id
 
 
 def create_app() -> Any:
@@ -85,15 +92,21 @@ def create_app() -> Any:
 
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload) -> dict[str, Any]:
-        event, result = await _process(payload)
-        return {"event": event.to_dict(), "anomaly": asdict(result)}
+        event, result, task_id = await _process(payload)
+        response = {"event": event.to_dict(), "anomaly": asdict(result)}
+        if task_id is not None:
+            response["inference_task_id"] = task_id
+        return response
 
     @app.post("/v1/logs/batch")
     async def ingest_batch(payload: BatchPayload) -> dict[str, Any]:
         results = []
         for item in payload.logs:
-            event, result = await _process(item)
-            results.append({"event": event.to_dict(), "anomaly": asdict(result)})
+            event, result, task_id = await _process(item)
+            response = {"event": event.to_dict(), "anomaly": asdict(result)}
+            if task_id is not None:
+                response["inference_task_id"] = task_id
+            results.append(response)
         return {"count": len(results), "results": results}
 
     @app.get("/v1/logs/recent")
