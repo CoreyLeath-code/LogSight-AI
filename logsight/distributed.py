@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol
 
-from .embeddings import EmbeddedLog, build_embedding_worker
+from .embeddings import EmbeddedLog, EmbeddingWorker, build_embedding_worker
 from .enterprise import EnrichedLog
 
 _TASK_NAME = "logsight.embed_events"
@@ -162,15 +162,20 @@ def create_celery_app() -> Any:
         result_expires=3600,
     )
 
+    embedding_worker: EmbeddingWorker | None = None
+
     @app.task(name=_TASK_NAME)
     def embed_events(payloads: list[dict[str, object]]) -> list[dict[str, object]]:
+        nonlocal embedding_worker
         if not 1 <= len(payloads) <= max_batch_size:
             raise ValueError(f"batch size must be between 1 and {max_batch_size}")
         requests = [
             InferenceRequest.from_payload(payload, max_message_chars=max_message_chars)
             for payload in payloads
         ]
-        results: list[EmbeddedLog] = build_embedding_worker(max_batch_size=max_batch_size).embed(
+        if embedding_worker is None:
+            embedding_worker = build_embedding_worker(max_batch_size=max_batch_size)
+        results: list[EmbeddedLog] = embedding_worker.embed(
             [request.to_event() for request in requests]
         )
         return [asdict(result) for result in results]
