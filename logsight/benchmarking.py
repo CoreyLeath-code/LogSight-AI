@@ -58,7 +58,9 @@ def load_labeled_corpus(path: str | Path) -> tuple[LabeledLog, ...]:
 
     records: list[LabeledLog] = []
     identifiers: set[str] = set()
-    for line_number, line in enumerate(corpus_path.read_text(encoding="utf-8").splitlines(), start=1):
+    for line_number, line in enumerate(
+        corpus_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
         if not line.strip():
             continue
         if len(records) >= _MAX_RECORDS:
@@ -96,7 +98,9 @@ def evaluate_labeled_corpus(
     alerts = {id(entry) for entry in detect_anomalies(entries, zscore_threshold).anomalies}
 
     true_positives = sum(
-        1 for entry, record in zip(entries, corpus, strict=True) if id(entry) in alerts and record.is_anomaly
+        1
+        for entry, record in zip(entries, corpus, strict=True)
+        if id(entry) in alerts and record.is_anomaly
     )
     false_positives = sum(
         1
@@ -175,7 +179,9 @@ def _parse_record(raw: Any, line_number: int) -> LabeledLog:
     identifier = _required_string(raw, "id", line_number)
     message = _required_string(raw, "message", line_number)
     if len(message) > _MAX_MESSAGE_CHARS:
-        raise ValueError(f"benchmark line {line_number} message exceeds {_MAX_MESSAGE_CHARS} characters")
+        raise ValueError(
+            f"benchmark line {line_number} message exceeds {_MAX_MESSAGE_CHARS} characters"
+        )
     level_name = _required_string(raw, "level", line_number).upper()
     try:
         level = LogLevel(level_name)
@@ -186,7 +192,9 @@ def _parse_record(raw: Any, line_number: int) -> LabeledLog:
         raise ValueError(f"benchmark line {line_number} requires boolean is_anomaly")
     incident_id = raw.get("incident_id")
     if incident_id is not None and (not isinstance(incident_id, str) or not incident_id.strip()):
-        raise ValueError(f"benchmark line {line_number} incident_id must be a non-empty string or null")
+        raise ValueError(
+            f"benchmark line {line_number} incident_id must be a non-empty string or null"
+        )
     if label and incident_id is None:
         raise ValueError(f"benchmark line {line_number} anomalous records require incident_id")
     return LabeledLog(
