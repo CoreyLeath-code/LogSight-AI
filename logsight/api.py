@@ -8,6 +8,7 @@ from dataclasses import asdict
 from typing import Any
 
 from .enterprise import EnrichedLog, enrich, score_event
+from .observability import configure_tracing, correlate_with_active_span, span
 from .parser import parse_line
 from .redis_control import RedisAdmissionController, build_redis_controller
 from .templates import TemplateParser, build_template_parser
@@ -43,29 +44,34 @@ _admission_controller: RedisAdmissionController | None = build_redis_controller(
 
 
 async def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
-    event = enrich(
-        parse_line(item.line),
-        service=item.service,
-        source=item.source,
-        host=item.host,
-    )
-    if _admission_controller is not None:
-        decision = await _admission_controller.admit(event, item.service)
-        if not decision.accepted:
-            status_code = 409 if decision.reason == "duplicate" else 429
-            raise HTTPException(status_code=status_code, detail=decision.reason)
-    event.template = _template_parser.parse(event.message)
-    _recent.append(event)
-    result = score_event(event, list(_recent))
-    _metrics["logsight_ingested_total"] += 1
-    if result.score >= 0.5:
-        _metrics["logsight_anomalies_total"] += 1
-    return event, result
+    with span("logsight.ingest", service=item.service, source=item.source) as _:
+        event = correlate_with_active_span(
+            enrich(
+                parse_line(item.line),
+                service=item.service,
+                source=item.source,
+                host=item.host,
+            )
+        )
+        if _admission_controller is not None:
+            decision = await _admission_controller.admit(event, item.service)
+            if not decision.accepted:
+                status_code = 409 if decision.reason == "duplicate" else 429
+                raise HTTPException(status_code=status_code, detail=decision.reason)
+        event.template = _template_parser.parse(event.message)
+        _recent.append(event)
+        result = score_event(event, list(_recent))
+        _metrics["logsight_ingested_total"] += 1
+        if result.score >= 0.5:
+            _metrics["logsight_anomalies_total"] += 1
+        return event, result
 
 
 def create_app() -> Any:
     if FastAPI is None:
         raise RuntimeError("Install the 'api' extra to run the LogSight API")
+    if os.getenv("LOGSIGHT_OTEL_ENABLED", "").lower() == "true":
+        configure_tracing("logsight-api")
     app = FastAPI(title="LogSight-AI Enterprise API", version="0.2.0")
 
     @app.get("/health")
