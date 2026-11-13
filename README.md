@@ -57,6 +57,7 @@ flowchart LR
 - `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
 - `logsight.redis_control.RedisAdmissionController` — atomic Redis deduplication and per-service rate-limit admission control.
 - `logsight.distributed.CeleryInferenceDispatcher` — bounded JSON Celery dispatch for asynchronous embedding work.
+- `logsight.investigator.IncidentInvestigator` — retrieval-grounded, version-pinned incident runbook investigator with evidence citations.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -93,6 +94,24 @@ pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### Incident investigator
+
+The incident investigator retrieves only approved local Markdown runbooks and returns
+deterministically ranked excerpts with the runbook version, supplied immutable repository
+revision, source path, and a SHA-256 content digest. It does not call a hosted model,
+diagnose a root cause, take remediation actions, or turn an excerpt into an authorization
+to act.
+
+```bash
+logsight investigate "database timeout during checkout" \
+  --runbooks ./runbooks \
+  --revision "$(git rev-parse HEAD)" \
+  --evidence "ERROR connection pool timeout"
+```
+
+See [incident-investigator controls](docs/INCIDENT_INVESTIGATOR.md) for the runbook
+format, provenance contract, and production-promotion expectations.
 
 ### Helm deployment
 
@@ -246,7 +265,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] OTel Collector deployment and trace-log correlation pipeline
 - [x] Celery/Ray distributed inference workers
 - [x] Helm chart with HPA/PDB/network policies
-- [ ] RAG incident investigator with versioned runbooks/commits
+- [x] RAG incident investigator with versioned runbooks/commits
 - [ ] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
 ## Documentation
@@ -256,6 +275,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [Collector correlation](docs/OTEL_COLLECTOR.md)
 - [Celery inference workers](docs/CELERY_WORKERS.md)
 - [Helm chart](charts/logsight-ai/README.md)
+- [Incident investigator](docs/INCIDENT_INVESTIGATOR.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import click
 from rich.console import Console
@@ -10,6 +11,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from logsight.analyzer import AnomalyReport, detect_anomalies, error_rate_spike_details
+from logsight.investigator import IncidentInvestigator, RunbookRepository
 from logsight.parser import parse_file, parse_lines
 from logsight.reasoning import EvidenceExplanation, explain_report
 
@@ -167,6 +169,64 @@ def stdin_cmd(threshold: float, explain: bool) -> None:
     _print_report(report, show_anomalies=True)
     if explain:
         _print_explanations(explain_report(report))
+
+
+@main.command("investigate")
+@click.argument("query")
+@click.option(
+    "--runbooks",
+    type=click.Path(exists=True, file_okay=False, readable=True, path_type=Path),
+    default=Path("runbooks"),
+    show_default=True,
+    help="Directory containing approved, versioned Markdown runbooks.",
+)
+@click.option(
+    "--revision",
+    envvar="LOGSIGHT_RUNBOOK_REVISION",
+    required=True,
+    help="Immutable commit revision for the runbook set.",
+)
+@click.option(
+    "--evidence",
+    multiple=True,
+    help="Additional incident evidence; repeat this option for each item.",
+)
+@click.option(
+    "--limit",
+    default=3,
+    type=click.IntRange(1, 10),
+    show_default=True,
+    help="Maximum number of grounded runbook citations to return.",
+)
+def investigate_cmd(
+    query: str,
+    runbooks: Path,
+    revision: str,
+    evidence: tuple[str, ...],
+    limit: int,
+) -> None:
+    """Retrieve approved runbook evidence for an incident QUERY."""
+
+    try:
+        repository = RunbookRepository(runbooks, revision=revision)
+        investigation = IncidentInvestigator(repository.load()).investigate(
+            query, evidence=evidence, limit=limit
+        )
+    except (OSError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    console.print("[bold]Investigation provenance[/bold]")
+    console.print(f"  revision : [cyan]{investigation.revision}[/cyan]")
+    console.print(f"  guidance : {investigation.guidance}")
+    for citation in investigation.citations:
+        console.print(
+            f"\n[bold]{escape(citation.title)}[/bold] "
+            f"({escape(citation.identifier)} v{escape(citation.version)})"
+        )
+        console.print(f"  source   : {escape(citation.path)} @ {escape(citation.revision)}")
+        console.print(f"  digest   : {citation.digest}")
+        console.print(f"  score    : {citation.score:.4f}")
+        console.print(f"  excerpt  : {escape(citation.excerpt)}")
 
 
 @main.command("health")
