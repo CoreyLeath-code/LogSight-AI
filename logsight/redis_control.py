@@ -29,9 +29,7 @@ return {1, "accepted"}
 class AsyncRedisClient(Protocol):
     """Small async Redis contract needed by the admission controller."""
 
-    async def eval(
-        self, script: str, numkeys: int, *keys_and_args: str | int
-    ) -> Sequence[Any]:
+    async def eval(self, script: str, numkeys: int, *keys_and_args: str | int) -> Sequence[Any]:
         """Execute a Lua script and return its result tuple."""
 
 
@@ -87,11 +85,16 @@ class RedisAdmissionController:
         if len(response) != 2:
             raise RuntimeError("Redis admission script returned an invalid response")
         accepted, reason = response
-        if accepted not in (0, 1) or not isinstance(reason, str) or reason not in {
-            "accepted",
-            "duplicate",
-            "rate_limited",
-        }:
+        if (
+            accepted not in (0, 1)
+            or not isinstance(reason, str)
+            or reason
+            not in {
+                "accepted",
+                "duplicate",
+                "rate_limited",
+            }
+        ):
             raise RuntimeError("Redis admission script returned an invalid response")
         return AdmissionDecision(accepted=bool(accepted), reason=reason)
 
