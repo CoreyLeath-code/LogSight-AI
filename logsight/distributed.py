@@ -176,4 +176,18 @@ def create_celery_app() -> Any:
     return app
 
 
+def build_celery_dispatcher() -> CeleryInferenceDispatcher | None:
+    """Build an enqueue adapter only when API dispatch is explicitly enabled."""
+
+    if os.getenv("LOGSIGHT_CELERY_DISPATCH_ENABLED") != "true":
+        return None
+    _, _, max_batch_size, max_message_chars, _ = _settings()
+    return CeleryInferenceDispatcher(
+        create_celery_app(),
+        queue=os.getenv("LOGSIGHT_CELERY_QUEUE", "inference"),
+        max_batch_size=max_batch_size,
+        max_message_chars=max_message_chars,
+    )
+
+
 celery_app = create_celery_app() if os.getenv("LOGSIGHT_CELERY_ENABLED") == "true" else None
