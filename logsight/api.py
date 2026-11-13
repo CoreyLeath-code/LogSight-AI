@@ -7,8 +7,9 @@ from collections import deque
 from dataclasses import asdict
 from typing import Any
 
-from .enterprise import EnrichedLog, enrich, extract_template, score_event
+from .enterprise import EnrichedLog, enrich, score_event
 from .parser import parse_line
+from .templates import TemplateParser, build_template_parser
 
 try:
     from fastapi import FastAPI, HTTPException, Response
@@ -36,6 +37,7 @@ class BatchPayload(BaseModel):  # type: ignore[misc]
 
 _recent: deque[EnrichedLog] = deque(maxlen=int(os.getenv("LOGSIGHT_WINDOW", "500")))
 _metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
+_template_parser: TemplateParser = build_template_parser()
 
 
 def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
@@ -45,7 +47,7 @@ def _process(item: LogPayload) -> tuple[EnrichedLog, Any]:
         source=item.source,
         host=item.host,
     )
-    event.template = extract_template(event.message)
+    event.template = _template_parser.parse(event.message)
     _recent.append(event)
     result = score_event(event, list(_recent))
     _metrics["logsight_ingested_total"] += 1
