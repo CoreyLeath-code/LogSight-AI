@@ -7,7 +7,7 @@ import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from .enterprise import EnrichedLog
 
@@ -50,7 +50,10 @@ class OnnxRuntimeBackend:
             import onnxruntime as ort
         except ImportError as exc:
             raise RuntimeError("Install the ai extra to enable ONNX Runtime inference") from exc
-        return ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+        return cast(
+            _OnnxSession,
+            ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"]),
+        )
 
     def infer(self, rows: Sequence[Sequence[float]]) -> list[list[float]]:
         try:
