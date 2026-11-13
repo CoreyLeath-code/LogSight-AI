@@ -108,11 +108,11 @@ class OnnxInferenceWorker:
             raise ValueError(f"batch size must be between 1 and {self.max_batch_size}")
         if len(features) != len(events):
             raise ValueError("events and feature rows must have the same length")
-        if any(
-            len(row) != self.feature_dimension
-            or not all(math.isfinite(value) for value in row)
+        has_invalid_row = any(
+            len(row) != self.feature_dimension or not all(math.isfinite(value) for value in row)
             for row in features
-        ):
+        )
+        if has_invalid_row:
             raise ValueError("feature rows must be finite and match the configured dimension")
 
         scores = self.backend.infer(features)
