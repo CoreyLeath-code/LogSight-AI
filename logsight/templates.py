@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from threading import Lock
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from .enterprise import extract_template
 
@@ -60,7 +60,7 @@ class Drain3TemplateParser:
         config = TemplateMinerConfig()
         if config_path:
             config.load(str(config_path))
-        return TemplateMiner(config=config)
+        return cast(_Drain3Miner, TemplateMiner(config=config))
 
     def parse(self, message: str) -> str:
         with self._lock:
