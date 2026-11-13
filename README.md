@@ -56,6 +56,7 @@ flowchart LR
 - `logsight.logbert.LogBertAnomalyAdapter` — bounded local-checkpoint masked-LM adapter with calibrated loss-threshold decisions.
 - `logsight.onnx_worker.OnnxInferenceWorker` — bounded ONNX Runtime feature-batch worker with model provenance and score validation.
 - `logsight.redis_control.RedisAdmissionController` — atomic Redis deduplication and per-service rate-limit admission control.
+- `logsight.distributed.CeleryInferenceDispatcher` — bounded JSON Celery dispatch for asynchronous embedding work.
 - `logsight.streaming.InMemoryStream` — bounded local async stream for tests and development.
 - `logsight.streaming.KafkaStream` — optional Kafka/Redpanda producer using `aiokafka`.
 - `logsight.storage.ClickHouseStore` and `QdrantStore` — HTTP adapters for durable analytical and semantic storage.
@@ -80,6 +81,7 @@ Services exposed locally:
 | ClickHouse | 8123 | Log analytics/storage |
 | Qdrant | 6333 | Vector similarity search |
 | Redis | 6379 | Cache/dedup/rate limiting foundation |
+| Celery worker | — | Bounded asynchronous embedding inference |
 | OTel Collector | 4317 / 4318 | OTLP trace and log intake |
 | Prometheus | 9090 | Metrics collection |
 | Grafana | 3000 | Dashboards |
@@ -91,6 +93,23 @@ pip install -e ".[api,kafka,observability,ai,parsing,redis]"
 ```
 
 The optional integrations are deliberately separated so a developer can use the original local-first CLI without downloading heavyweight ML or infrastructure clients.
+
+### Distributed inference workers
+
+The enterprise Compose stack includes an idle Celery embedding worker. Its task
+contract accepts bounded JSON envelopes only, limits prefetching to one task, and
+uses late acknowledgement/reject-on-worker-loss semantics. API dispatch is
+disabled until a deployment provisions an approved model artifact:
+
+```bash
+export LOGSIGHT_CELERY_DISPATCH_ENABLED=true
+export LOGSIGHT_EMBEDDING_MODEL=/models/approved-embedding-model
+```
+
+After enabling it, accepted API events include an `inference_task_id`; asynchronous
+embedding does not change the request-time anomaly score. See
+[Celery worker deployment](docs/CELERY_WORKERS.md) for queue, security, and
+production-promotion controls.
 
 ### OpenTelemetry Collector and trace–log correlation
 
@@ -218,7 +237,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] ONNX Runtime inference worker
 - [x] Redis-backed deduplication/rate limiting
 - [x] OTel Collector deployment and trace-log correlation pipeline
-- [ ] Celery/Ray distributed inference workers
+- [x] Celery/Ray distributed inference workers
 - [ ] Helm chart with HPA/PDB/network policies
 - [ ] RAG incident investigator with versioned runbooks/commits
 - [ ] Labeled benchmark corpus with precision/recall and alert-burden metrics
@@ -228,6 +247,7 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [Production audit](docs/AUDIT.md)
 - [Architecture](docs/architecture.md)
 - [Collector correlation](docs/OTEL_COLLECTOR.md)
+- [Celery inference workers](docs/CELERY_WORKERS.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)
