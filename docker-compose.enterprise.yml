@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        INSTALL_EXTRAS: api,redis,observability
+        INSTALL_EXTRAS: api,redis,observability,workers
     image: logsight-ai:enterprise
     entrypoint: []
     command: ["uvicorn", "logsight.api:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -13,6 +13,9 @@ services:
       LOGSIGHT_RATE_LIMIT: "120"
       LOGSIGHT_RATE_WINDOW_SECONDS: "60"
       LOGSIGHT_DEDUP_TTL_SECONDS: "300"
+      LOGSIGHT_CELERY_BROKER_URL: redis://redis:6379/0
+      LOGSIGHT_CELERY_RESULT_BACKEND: redis://redis:6379/1
+      LOGSIGHT_CELERY_DISPATCH_ENABLED: "false"
       LOGSIGHT_OTEL_ENABLED: "true"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SERVICE_NAME: logsight-api
@@ -33,6 +36,29 @@ services:
     cap_drop: [ALL]
     tmpfs:
       - /tmp:size=32m,mode=1777
+
+  logsight-worker:
+    build:
+      context: .
+      args:
+        INSTALL_EXTRAS: workers,ai
+    image: logsight-ai:inference-worker
+    entrypoint: []
+    command: ["celery", "-A", "logsight.distributed.celery_app", "worker", "--loglevel=INFO", "--concurrency=2", "--prefetch-multiplier=1", "--queues=inference"]
+    environment:
+      LOGSIGHT_CELERY_ENABLED: "true"
+      LOGSIGHT_CELERY_BROKER_URL: redis://redis:6379/0
+      LOGSIGHT_CELERY_RESULT_BACKEND: redis://redis:6379/1
+      LOGSIGHT_CELERY_MAX_BATCH_SIZE: "64"
+      LOGSIGHT_CELERY_TASK_TIME_LIMIT_SECONDS: "120"
+    depends_on:
+      - redis
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    tmpfs:
+      - /tmp:size=128m,mode=1777
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.120.0
