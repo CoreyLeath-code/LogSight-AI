@@ -14,7 +14,7 @@ services:
       LOGSIGHT_RATE_WINDOW_SECONDS: "60"
       LOGSIGHT_DEDUP_TTL_SECONDS: "300"
       LOGSIGHT_OTEL_ENABLED: "true"
-      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SERVICE_NAME: logsight-api
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       CLICKHOUSE_URL: http://clickhouse:8123
