@@ -120,8 +120,15 @@ def build_embedding_worker(
 ) -> EmbeddingWorker:
     """Build the optional worker from explicit values or deployment settings."""
 
-    resolved_model = model_name or os.getenv("LOGSIGHT_EMBEDDING_MODEL", DEFAULT_MODEL)
-    resolved_batch_size = max_batch_size or int(os.getenv("LOGSIGHT_EMBEDDING_BATCH_SIZE", "64"))
+    configured_model = (
+        model_name if model_name is not None else os.getenv("LOGSIGHT_EMBEDDING_MODEL")
+    )
+    resolved_model = configured_model or DEFAULT_MODEL
+    resolved_batch_size = (
+        max_batch_size
+        if max_batch_size is not None
+        else int(os.getenv("LOGSIGHT_EMBEDDING_BATCH_SIZE", "64"))
+    )
     return EmbeddingWorker(
         SentenceTransformerBackend(resolved_model),
         model_name=resolved_model,
