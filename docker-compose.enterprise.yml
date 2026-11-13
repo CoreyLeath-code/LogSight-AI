@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        INSTALL_EXTRAS: api,redis
+        INSTALL_EXTRAS: api,redis,observability
     image: logsight-ai:enterprise
     entrypoint: []
     command: ["uvicorn", "logsight.api:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -13,6 +13,9 @@ services:
       LOGSIGHT_RATE_LIMIT: "120"
       LOGSIGHT_RATE_WINDOW_SECONDS: "60"
       LOGSIGHT_DEDUP_TTL_SECONDS: "300"
+      LOGSIGHT_OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_SERVICE_NAME: logsight-api
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       CLICKHOUSE_URL: http://clickhouse:8123
       QDRANT_URL: http://qdrant:6333
@@ -23,6 +26,23 @@ services:
       - clickhouse
       - qdrant
       - redis
+      - otel-collector
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ["--config=/etc/otelcol-contrib/collector.yml"]
+    volumes:
+      - ./deploy/otel/collector.yml:/etc/otelcol-contrib/collector.yml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
     read_only: true
     security_opt:
       - no-new-privileges:true
