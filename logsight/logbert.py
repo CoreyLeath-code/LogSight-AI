@@ -41,12 +41,12 @@ class TransformersMaskedLMBackend:
             from transformers import AutoModelForMaskedLM, AutoTokenizer
         except ImportError as exc:
             raise RuntimeError("Install the ai extra to enable the LogBERT adapter") from exc
-        self._tokenizer = AutoTokenizer.from_pretrained(
+        self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615 - local provisioned model
             self.model_path,
             local_files_only=True,
-            revision="local",  # nosec B615 - local_files_only uses a provisioned directory
+            revision="local",
         )
-        self._model = AutoModelForMaskedLM.from_pretrained(
+        self._model = AutoModelForMaskedLM.from_pretrained(  # nosec B615 - local provisioned model
             self.model_path,
             local_files_only=True,
             revision="local",
