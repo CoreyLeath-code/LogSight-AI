@@ -77,7 +77,7 @@ class TestInvestigateCommand:
     def test_returns_versioned_grounded_citation(self, tmp_path):
         runbook = tmp_path / "database.md"
         runbook.write_text(
-            "\\n".join(
+            "\n".join(
                 [
                     "---",
                     "id: database-timeout",
