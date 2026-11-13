@@ -25,7 +25,9 @@ def configure_tracing(service_name: str) -> None:
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
     except ImportError as exc:
-        raise RuntimeError("Install the observability extra to enable OpenTelemetry tracing") from exc
+        raise RuntimeError(
+            "Install the observability extra to enable OpenTelemetry tracing"
+        ) from exc
 
     provider = TracerProvider(resource=Resource.create({SERVICE_NAME: service_name}))
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
