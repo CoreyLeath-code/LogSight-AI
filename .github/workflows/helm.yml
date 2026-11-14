@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - run: helm lint charts/logsight-ai
       - run: helm template logsight-ai charts/logsight-ai --namespace logsight > rendered-manifests.yaml
       - uses: actions/upload-artifact@v7
