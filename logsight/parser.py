@@ -58,6 +58,8 @@ _TS_FORMATS = [
     "%Y-%m-%dT%H:%M:%S%z",
     "%Y-%m-%dT%H:%M:%S.%f",
     "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%d %H:%M:%S.%f%z",
+    "%Y-%m-%d %H:%M:%S%z",
     "%Y-%m-%d %H:%M:%S.%f",
     "%Y-%m-%d %H:%M:%S",
 ]
@@ -84,6 +86,8 @@ def _parse_timestamp(raw: str | None) -> datetime | None:
     if not raw:
         return None
     raw = raw.strip().replace(",", ".")
+    if raw.endswith(("Z", "z")):
+        raw = raw[:-1] + "+00:00"
     for fmt in _TS_FORMATS:
         try:
             return datetime.strptime(raw, fmt)
