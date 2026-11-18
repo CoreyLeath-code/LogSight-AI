@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import textwrap
+from datetime import timedelta, timezone
 
 from logsight.parser import LogEntry, LogLevel, parse_line, parse_lines
 
@@ -138,3 +139,25 @@ class TestParseFile:
         assert len(entries) == 3
         assert entries[1].level == LogLevel.ERROR
         assert entries[2].level == LogLevel.WARNING
+
+
+class TestTimestampAndLevelBoundaries:
+    def test_utc_z_timestamp_is_timezone_aware(self):
+        entry = parse_line("2026-11-17T18:00:00Z INFO event")
+        assert entry.timestamp is not None
+        assert entry.timestamp.utcoffset() == timedelta(0)
+
+    def test_space_timestamp_with_offset_is_parsed(self):
+        entry = parse_line("2026-11-17 18:00:00+05:30 ERROR event")
+        assert entry.timestamp is not None
+        assert entry.timestamp.utcoffset() == timedelta(hours=5, minutes=30)
+
+    def test_level_prefix_inside_word_is_not_misclassified(self):
+        entry = parse_line("INFORMATION service is ready")
+        assert entry.level == LogLevel.UNKNOWN
+        assert entry.message == "INFORMATION service is ready"
+
+    def test_explicit_level_still_recognized(self):
+        entry = parse_line("INFO service is ready")
+        assert entry.level == LogLevel.INFO
+        assert entry.message == "service is ready"
