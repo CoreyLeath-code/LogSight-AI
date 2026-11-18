@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import textwrap
-from datetime import timedelta, timezone
+from datetime import timedelta
 
 from logsight.parser import LogEntry, LogLevel, parse_line, parse_lines
 
