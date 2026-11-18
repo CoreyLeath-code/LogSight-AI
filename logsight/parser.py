@@ -31,7 +31,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         "iso8601",
         re.compile(
             r"^(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?)"
-            r"\s+(?P<level>DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)?\s*"
+            r"\s+(?:(?P<level>DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)\s+)?"
             r"(?:\[(?P<logger>[^\]]+)\])?\s*(?P<message>.+)$",
             re.IGNORECASE,
         ),
@@ -46,7 +46,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "generic",
         re.compile(
-            r"^(?P<level>DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)?\s*(?P<message>.+)$",
+            r"^(?:(?P<level>DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)\s+)?(?P<message>.+)$",
             re.IGNORECASE,
         ),
     ),
