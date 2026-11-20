@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — offline DLQ verification foundation:** metadata-only
+  source/checksum verification without publishing or replaying payloads
+  ([PR #66](https://github.com/CoreyLeath-code/LogSight-AI/pull/66)).
 - [x] **Phase 3 — malformed-event quarantine foundation:** optional restricted
   Kafka DLQ with source-offset commit gated on DLQ acknowledgement
   ([PR #65](https://github.com/CoreyLeath-code/LogSight-AI/pull/65)).
@@ -260,6 +263,19 @@ access, and a reviewed sanitization process. It currently has no authorized
 replay CLI, deduplication guarantee, poison-event repair protocol, retry budget,
 or live-broker recovery proof. Never enable this for untrusted workloads without
 an approved data governance design.
+
+### Offline DLQ envelope verification (candidate PR)
+
+An offline operator utility validates existing restricted dead-letter
+envelopes, original-byte checksum, source coordinates, and input size without
+printing or republishing the payload. Tests reject mutated checksums,
+encodings, versions and coordinates, and check that metadata-only reports do
+not expose representative secrets. This is an incremental prerequisite to a
+controlled replay runbook.
+
+**Not completed:** no automatic replay, tenant authorization, repair approval,
+data-retention enforcement, payload sanitization guarantee, durable deduplication,
+live-broker integration, or operational recovery drill is implemented.
 
 ## Phase 3 — Durable ingestion and storage
 

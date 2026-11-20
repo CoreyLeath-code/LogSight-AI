@@ -404,6 +404,20 @@ acknowledgement keeps the source record uncommitted; a source-offset commit
 failure can create duplicate quarantines. This is not exactly-once processing
 or a production-ready replay solution.
 
+### Offline dead-letter inspection (Phase 3 foundation)
+
+Restricted DLQ records can be checked **offline** with
+`python -m logsight.dlq_inspect /secure/path/envelope.json`.
+The command checks schema version, Kafka source coordinates, payload size,
+base64 integrity, and SHA-256, then prints **metadata only**, never the
+original sensitive message body. Invalid envelopes return a failing exit code.
+
+This is an operator-aided verification step, **not** a replay tool. A
+quarantined event must not be republished automatically; approving repairs,
+re-validating privacy controls, enforcing tenant authorization, retaining an
+audit trail, deduplicating replays, and verifying broker recovery are still
+required before any production replay.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -423,6 +437,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** metadata-only offline verification of restricted
+  dead-letter envelopes, including checksum and corruption checks
+  ([PR #66](https://github.com/CoreyLeath-code/LogSight-AI/pull/66)).
 - [x] **Phase 3 foundation:** optional fail-closed Kafka dead-letter quarantine
   for malformed records; source commits only after DLQ acknowledgements
   ([PR #65](https://github.com/CoreyLeath-code/LogSight-AI/pull/65)).
