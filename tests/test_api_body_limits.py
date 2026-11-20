@@ -47,7 +47,6 @@ def test_streamed_body_over_limit_is_rejected() -> None:
     from logsight.request_limits import IngestionBodyLimit
 
     async def scenario() -> None:
-
         reached_app = False
 
         async def inner(scope, receive, send):
