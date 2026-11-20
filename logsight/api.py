@@ -110,7 +110,6 @@ def create_app() -> Any:
                 )
         return await call_next(request)
 
-
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "logsight-api"}
