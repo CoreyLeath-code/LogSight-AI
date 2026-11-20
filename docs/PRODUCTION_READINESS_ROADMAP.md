@@ -100,6 +100,17 @@ requests, and successful small requests. This is partial Phase 1 evidence;
 concurrency/timeouts, tenant-aware quotas, identity and authorization,
 external ingress policy, and deployment load evidence remain outstanding.
 
+### Scoped Redis admission-key hardening (PR #58)
+
+Redis deduplication includes the same hashed admission scope as its per-scope
+rate-limit key. Equal event fingerprints from unrelated service scopes no longer
+share a deduplication key. Regression tests verify scope separation and stable
+same-scope keys.
+
+**Boundary:** the scope still comes from a caller-supplied service field;
+this does not provide trusted workload identity or tenant authorization.
+The Phase 1 exit criteria remain open.
+
 ## Phase 1 — API trust boundary
 
 - [ ] Require workload identity at the ingress boundary (for example OIDC,

@@ -42,6 +42,8 @@ def test_admission_uses_atomic_script_and_hashed_scope() -> None:
     assert key_count == 2
     assert str(dedup_key).startswith("logsight:dedup:")
     assert str(rate_key).startswith("logsight:rate:")
+    # Both keys must use the same scope digest.
+    assert str(dedup_key).split(":")[2] == str(rate_key).split(":")[2]
     assert "payments/api" not in str(rate_key)
     assert args == [5, 30, 90]
 
@@ -122,3 +124,31 @@ def test_redis_controller_builds_from_explicit_configuration(
     assert controller.dedup_ttl_seconds == 180
     assert controller.key_prefix == "tenant"
     assert created == {"url": "redis://cache:6379/2", "decode_responses": True}
+
+
+def test_dedup_key_is_distinct_across_service_scopes() -> None:
+    """Identical log fingerprints must not interfere across services."""
+    client = FakeRedis([1, "accepted"])
+    controller = RedisAdmissionController(client)
+    same_event = event("ERROR identical message")
+
+    asyncio.run(controller.admit(same_event, "tenant-a/payments"))
+    asyncio.run(controller.admit(same_event, "tenant-b/payments"))
+
+    first = client.calls[0]
+    second = client.calls[1]
+    assert first[2] != second[2]
+    assert first[3] != second[3]
+    assert str(first[2]).endswith(same_event.fingerprint or "")
+    assert str(second[2]).endswith(same_event.fingerprint or "")
+
+
+def test_same_scope_reuses_dedup_key() -> None:
+    client = FakeRedis([1, "accepted"])
+    controller = RedisAdmissionController(client)
+    same_event = event("ERROR duplicate message")
+
+    asyncio.run(controller.admit(same_event, "tenant-a/payments"))
+    asyncio.run(controller.admit(same_event, "tenant-a/payments"))
+
+    assert client.calls[0][2] == client.calls[1][2]

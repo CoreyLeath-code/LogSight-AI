@@ -365,6 +365,8 @@ the full exit evidence and owner approval are recorded.
 
 - [x] **Phase 1 foundation:** optional bearer-token API guard and negative
   authorization tests ([PR #55](https://github.com/CoreyLeath-code/LogSight-AI/pull/55)).
+- [x] **Phase 1 foundation:** scope Redis duplicate suppression keys by
+  service admission scope ([PR #58](https://github.com/CoreyLeath-code/LogSight-AI/pull/58)).
 - [x] **Phase 1 foundation:** ingestion body-size limit and streamed-payload
   regression tests ([PR #57](https://github.com/CoreyLeath-code/LogSight-AI/pull/57)).
 - [x] **Phase 2 foundation:** selected credentials and email addresses redacted
