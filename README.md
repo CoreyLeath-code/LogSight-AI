@@ -406,6 +406,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** validate and propagate optional client-supplied
+  UUIDv4 retry identity for single-event ingestion (identity only; no deduplication)
+  ([PR #64](https://github.com/CoreyLeath-code/LogSight-AI/pull/64)).
 - [x] **Phase 3 foundation:** assign event UUIDs and propagate them through
   Kafka into ClickHouse; schema migration and replay identity tests
   ([PR #63](https://github.com/CoreyLeath-code/LogSight-AI/pull/63)).
