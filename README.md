@@ -504,6 +504,22 @@ ClickHouse availability, Redis or inference workers, authenticated upstream
 connectivity, or durable end-to-end delivery. Deployment-scale readiness
 and Phase 4 exit evidence remain open.
 
+### Kafka acknowledgement-aware readiness (Phase 4 foundation)
+
+When experimental Kafka API ingestion is enabled, a failed, timed-out,
+or cancelled broker publish now marks its producer **not ready**.
+`GET /ready` returns HTTP 503 while `GET /health` stays live. A later
+**confirmed** Kafka publish restores readiness; shutdown and failed
+startup also leave it unavailable. Regression tests cover all these
+state changes, including an API-level failure/recovery sequence.
+
+**Operational boundary:** this tracks observed publish outcomes. It does
+not actively poll the broker, detect idle connection loss, guarantee
+recovery when Kubernetes removes a pod from service, or verify downstream
+ClickHouse persistence. Recovering a degraded pod may require a successful
+internal probe or restart; a bounded, authenticated broker health check
+and deployment-level failure drills remain open. Phase 4 remains unchecked.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
