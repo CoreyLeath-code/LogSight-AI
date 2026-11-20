@@ -125,7 +125,12 @@ async def run_worker() -> None:
         auto_offset_reset="earliest",
         **kafka_security_settings(),
     )
-    store = ClickHouseStore(base_url=url)
+    store = ClickHouseStore(
+        base_url=url,
+        username=os.environ.get("LOGSIGHT_CLICKHOUSE_USERNAME") or None,
+        password=os.environ.get("LOGSIGHT_CLICKHOUSE_PASSWORD") or None,
+        ca_file=os.environ.get("LOGSIGHT_CLICKHOUSE_SSL_CA_FILE") or None,
+    )
     dlq_producer = (
         AIOKafkaProducer(
             bootstrap_servers=bootstrap,
