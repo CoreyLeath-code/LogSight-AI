@@ -47,19 +47,27 @@ class KafkaStream:
         self.topic = topic
         self.publish_timeout_seconds = publish_timeout_seconds
         self._producer: Any = None
+        self._ready = False
 
     async def start(self) -> None:
         try:
             from aiokafka import AIOKafkaProducer
         except ImportError as exc:
             raise RuntimeError("Install the 'kafka' extra to use KafkaStream") from exc
-        self._producer = AIOKafkaProducer(
+        producer = AIOKafkaProducer(
             bootstrap_servers=self.bootstrap_servers,
             acks="all",
             enable_idempotence=True,
             **kafka_security_settings(),
         )
-        await self._producer.start()
+        self._ready = False
+        try:
+            await producer.start()
+        except BaseException:
+            self._producer = None
+            raise
+        self._producer = producer
+        self._ready = True
 
     async def publish(self, event: EnrichedLog) -> None:
         if self._producer is None:
@@ -72,19 +80,29 @@ class KafkaStream:
                 timeout=self.publish_timeout_seconds,
             )
         except TimeoutError as exc:
+            self._ready = False
             raise TimeoutError("Kafka publish acknowledgement timed out") from exc
+        except BaseException:
+            # Fail closed on broker errors and cancellation. A confirmed
+            # subsequent acknowledgement can restore local readiness.
+            self._ready = False
+            raise
+        else:
+            self._ready = True
 
     def is_ready(self) -> bool:
-        """Report whether the configured Kafka producer is initialized locally.
+        """Reflect local startup and the latest completed broker send outcome.
 
-        Does not prove broker reachability following startup.
+        This is NOT continuous broker reachability or a delivery SLA check.
         """
-        return self._producer is not None
+        return self._producer is not None and self._ready
 
     async def stop(self) -> None:
-        if self._producer is not None:
-            await self._producer.stop()
-            self._producer = None
+        self._ready = False
+        producer = self._producer
+        self._producer = None
+        if producer is not None:
+            await producer.stop()
 
 
 def batch(iterable: Iterable[EnrichedLog], size: int) -> Iterable[list[EnrichedLog]]:
