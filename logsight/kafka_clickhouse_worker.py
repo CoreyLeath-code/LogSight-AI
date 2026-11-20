@@ -22,10 +22,14 @@ _FIELDS = ("level", "service", "source", "host", "message", "raw", "fingerprint"
 _OPTIONAL_FIELDS = ("trace_id", "span_id", "template")
 
 
+class InvalidEventEnvelope(ValueError):
+    """Payload validation failure, never a storage or transport exception."""
+
+
 def decode_event(payload: bytes) -> dict[str, Any]:
     """Validate a bounded event envelope and map to the existing table contract."""
     if len(payload) > 1024 * 1024:
-        raise ValueError("Kafka event exceeds the 1 MiB worker limit")
+        raise InvalidEventEnvelope("Kafka event exceeds the 1 MiB worker limit")
     try:
         value = json.loads(payload)
         if not isinstance(value, dict):
@@ -54,8 +58,8 @@ def decode_event(payload: bytes) -> dict[str, Any]:
         timestamp = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
         if timestamp.tzinfo is None:
             raise ValueError("Kafka event timestamp requires timezone")
-    except (KeyError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ValueError("Invalid Kafka event schema") from exc
+    except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+        raise InvalidEventEnvelope("Invalid Kafka event schema") from exc
 
     normalized: dict[str, Any] = {key: redact_log_line(value[key]) for key in _FIELDS}
     normalized["event_id"] = event_id
@@ -119,7 +123,7 @@ async def run_worker() -> None:
             async for message in consumer:
                 try:
                     await persist_message(message.value, consumer, store)
-                except ValueError:
+                except InvalidEventEnvelope:
                     # Only malformed envelopes are quarantined. A ClickHouse
                     # outage must stop processing WITHOUT committing an offset.
                     if dlq_producer is None:
