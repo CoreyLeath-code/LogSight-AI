@@ -56,7 +56,7 @@ def test_real_kafka_clickhouse_redelivery_and_storage_recovery() -> None:
         )
         store = FailFirstInsert(base_url=clickhouse)
         event = enrich(parse_line("ERROR integration replay test"))
-        event.timestamp = datetime.now(timezone.utc)
+        event.timestamp = datetime.now(timezone.utc).isoformat()
         target_id = event.event_id
         await producer.start()
         try:
