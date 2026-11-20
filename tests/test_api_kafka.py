@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
@@ -39,7 +40,7 @@ class FakeKafka:
 
 
 @pytest.fixture
-def kafka_config(monkeypatch: pytest.MonkeyPatch) -> None:
+def kafka_config(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     FakeKafka.instances.clear()
     monkeypatch.setenv("LOGSIGHT_API_KAFKA_ENABLED", "true")
     monkeypatch.setenv("KAFKA_BOOTSTRAP_SERVERS", "broker:9092")
