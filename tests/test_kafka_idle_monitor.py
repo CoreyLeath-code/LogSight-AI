@@ -149,3 +149,69 @@ def test_periodic_monitor_invokes_probe_and_cancels_on_shutdown(
         assert producer.client.calls == before
 
     asyncio.run(asyncio.wait_for(scenario(), timeout=5))
+
+
+def test_metadata_success_does_not_erase_failed_publish(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Readiness must require both confirmed writes and broker metadata."""
+    from logsight.enterprise import enrich
+    from logsight.parser import parse_line
+
+    class Metadata:
+        def partitions_for_topic(self, topic: str) -> set[int]:
+            return {0}
+
+    class Client:
+        failing = False
+
+        async def fetch_all_metadata(self) -> Metadata:
+            if self.failing:
+                raise ConnectionError("metadata unreachable")
+            return Metadata()
+
+    class Producer:
+        def __init__(self, **kwargs: Any) -> None:
+            self.client = Client()
+            self.fail_send = True
+
+        async def start(self) -> None:
+            return None
+
+        async def stop(self) -> None:
+            return None
+
+        async def send_and_wait(self, topic: str, payload: bytes) -> None:
+            if self.fail_send:
+                raise ConnectionError("publish unavailable")
+
+    producer = Producer()
+    module = ModuleType("aiokafka")
+    module.AIOKafkaProducer = lambda **kwargs: producer  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
+    monkeypatch.setenv("LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS", "5")
+
+    async def scenario() -> None:
+        stream = KafkaStream("broker:9092", "logs")
+        await stream.start()
+        event = enrich(parse_line("INFO test"))
+        await stream._probe_metadata()
+        assert stream.is_ready()
+        with pytest.raises(ConnectionError):
+            await stream.publish(event)
+        assert not stream.is_ready()
+        await stream._probe_metadata()
+        assert not stream.is_ready()  # Metadata cannot override failed write.
+
+        producer.fail_send = False
+        producer.client.failing = True
+        await stream._probe_metadata()
+        await stream.publish(event)
+        assert not stream.is_ready()  # Write cannot override failed metadata.
+        producer.client.failing = False
+        await stream._probe_metadata()
+        assert stream.is_ready()
+        await stream.stop()
+        assert not stream.is_ready()
+
+    asyncio.run(asyncio.wait_for(scenario(), timeout=5))

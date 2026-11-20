@@ -49,6 +49,7 @@ class KafkaStream:
         self.publish_timeout_seconds = publish_timeout_seconds
         self._producer: Any = None
         self._ready = False
+        self._metadata_ready = True  # Metadata monitoring is opt-in.
         self._monitor_task: asyncio.Task[None] | None = None
         raw_interval = os.getenv("LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS", "0")
         try:
@@ -71,6 +72,7 @@ class KafkaStream:
             **kafka_security_settings(),
         )
         self._ready = False
+        self._metadata_ready = True  # Remain compatible until first scheduled probe.
         try:
             await producer.start()
         except BaseException:
@@ -85,7 +87,7 @@ class KafkaStream:
         """Force a live metadata request; never accept cached partition state."""
         producer = self._producer
         if producer is None:
-            self._ready = False
+            self._metadata_ready = False
             return
         try:
             metadata = await asyncio.wait_for(
@@ -96,11 +98,10 @@ class KafkaStream:
             if not partitions:
                 raise RuntimeError("Kafka topic has no available partitions")
         except Exception:
-            self._ready = False
+            self._metadata_ready = False
         else:
-            # Metadata availability is not proof of successful Kafka writes.
-            # It is one signal used alongside broker-acknowledged publishes.
-            self._ready = True
+            # Never clear a failed-publish signal using metadata alone.
+            self._metadata_ready = True
 
     async def _monitor_metadata(self) -> None:
         while True:
@@ -133,10 +134,11 @@ class KafkaStream:
 
         This is NOT continuous broker reachability or a delivery SLA check.
         """
-        return self._producer is not None and self._ready
+        return self._producer is not None and self._ready and self._metadata_ready
 
     async def stop(self) -> None:
         self._ready = False
+        self._metadata_ready = False
         monitor = self._monitor_task
         self._monitor_task = None
         if monitor is not None:
