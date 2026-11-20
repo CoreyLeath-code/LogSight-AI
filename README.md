@@ -17,6 +17,15 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### Bounded API ingestion bodies (incremental)
+
+The API now limits request bodies for `POST /v1/logs` and
+`POST /v1/logs/batch` using `LOGSIGHT_API_MAX_BODY_BYTES` (default:
+1,048,576 bytes; configurable up to 16 MiB). Oversized requests return HTTP
+413 before parsing or scoring. The limit covers requests with and without a
+`Content-Length` header. It does **not** replace ingress-level request limits,
+per-tenant admission controls, concurrency limits, or timeouts.
+
 ### API access hardening (incremental)
 
 The optional FastAPI gateway supports `LOGSIGHT_API_AUTH_MODE=token` with a
