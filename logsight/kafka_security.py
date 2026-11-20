@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import os
 import ssl
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def kafka_security_settings(
