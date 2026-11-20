@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import secrets
 from collections import deque
 from dataclasses import asdict
 from typing import Any
@@ -16,12 +17,13 @@ from .redis_control import RedisAdmissionController, build_redis_controller
 from .templates import TemplateParser, build_template_parser
 
 try:
-    from fastapi import FastAPI, HTTPException, Response
+    from fastapi import FastAPI, HTTPException, Request, Response
     from pydantic import BaseModel, Field
 except ImportError:  # pragma: no cover - base installation does not need the API
     FastAPI = None  # type: ignore[assignment,misc]
     HTTPException = RuntimeError  # type: ignore[misc,assignment]
     Response = object  # type: ignore[assignment,misc]
+    Request = object  # type: ignore[assignment,misc]
     BaseModel = object  # type: ignore[assignment,misc]
 
     def Field(**_: Any) -> Any:  # type: ignore[misc]
@@ -80,7 +82,33 @@ def create_app() -> Any:
         raise RuntimeError("Install the 'api' extra to run the LogSight API")
     if os.getenv("LOGSIGHT_OTEL_ENABLED", "").lower() == "true":
         configure_tracing("logsight-api")
+    auth_mode = os.getenv("LOGSIGHT_API_AUTH_MODE", "disabled").strip().lower()
+    if auth_mode not in {"disabled", "token"}:
+        raise RuntimeError("LOGSIGHT_API_AUTH_MODE must be disabled or token")
+    api_token = os.getenv("LOGSIGHT_API_TOKEN", "")
+    if auth_mode == "token" and len(api_token) < 32:
+        raise RuntimeError("LOGSIGHT_API_TOKEN must contain at least 32 characters in token mode")
+
     app = FastAPI(title="LogSight-AI Enterprise API", version="0.2.0")
+
+    @app.middleware("http")
+    async def require_api_token(request: Request, call_next: Any) -> Response:
+        # /health is intentionally unauthenticated for liveness probes.
+        if auth_mode == "token" and request.url.path != "/health":
+            authorization = request.headers.get("authorization", "")
+            scheme, separator, candidate = authorization.partition(" ")
+            if (
+                not separator
+                or scheme.lower() != "bearer"
+                or not secrets.compare_digest(candidate.encode(), api_token.encode())
+            ):
+                return Response(
+                    content='{"detail":"Unauthorized"}',
+                    status_code=401,
+                    media_type="application/json",
+                    headers={"WWW-Authenticate": "Bearer", "Cache-Control": "no-store"},
+                )
+        return await call_next(request)
 
     @app.get("/health")
     async def health() -> dict[str, str]:

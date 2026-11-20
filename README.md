@@ -17,6 +17,17 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### API access hardening (incremental)
+
+The optional FastAPI gateway supports `LOGSIGHT_API_AUTH_MODE=token` with a
+secret stored in `LOGSIGHT_API_TOKEN` (minimum 32 characters). Protected
+requests supply `Authorization: Bearer <token>`; `/health` remains public.
+The default `disabled` mode is for local development only. This shared-key
+control is **not** tenant-scoped authorization, a managed workload identity,
+or proof of production readiness. See the
+[production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md) for open
+security, privacy, and durable-ingestion gates.
+
 ### Production status
 
 LogSight-AI is a production-oriented engineering foundation; it is **not yet approved for an internet-facing, multi-tenant, or consequential production deployment**. The completed roadmap below establishes interfaces and controls. The remaining work is governed by the [production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md), whose exit evidence—not checkbox completion alone—defines promotion.

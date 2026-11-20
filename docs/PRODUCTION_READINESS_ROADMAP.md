@@ -45,6 +45,23 @@ The following do not count as evidence of production readiness on their own:
 definitions, an exercised rollback record, and a release checklist signed by the
 accountable owner.
 
+## Incremental implementation evidence (2026-11-19)
+
+A candidate PR adds an opt-in bearer-token check to the FastAPI gateway, protecting
+all routes except `/health`. It rejects invalid token-mode configuration at
+application creation, uses a constant-time comparison, and adds negative auth
+regression tests. This is **not a completed Phase 1 checkbox**: deployment
+integration, tenant-scoped identity/authorization, secrets management, TLS,
+request size/concurrency limits, access audits, and security review remain open.
+
+For the optional gateway, `LOGSIGHT_API_AUTH_MODE=token` requires a
+`LOGSIGHT_API_TOKEN` of at least 32 characters. Use a randomly generated
+secret from a deployment secret manager, transmit it only over TLS, and set
+`Authorization: Bearer <token>` on protected requests. The default mode
+`disabled` preserves local development behavior and **must not be used for a
+publicly reachable deployment**. `/health` remains a public liveness probe;
+metrics and recent-event endpoints are guarded in token mode.
+
 ## Phase 1 — API trust boundary
 
 - [ ] Require workload identity at the ingress boundary (for example OIDC,
