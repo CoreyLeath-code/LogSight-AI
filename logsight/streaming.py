@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 from .enterprise import EnrichedLog
+from .kafka_security import kafka_security_settings
 
 
 class InMemoryStream:
@@ -56,6 +57,7 @@ class KafkaStream:
             bootstrap_servers=self.bootstrap_servers,
             acks="all",
             enable_idempotence=True,
+            **kafka_security_settings(),
         )
         await self._producer.start()
 
