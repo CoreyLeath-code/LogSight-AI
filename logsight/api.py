@@ -15,6 +15,7 @@ from .observability import configure_tracing, correlate_with_active_span, span
 from .parser import parse_line
 from .redaction import redact_log_line
 from .redis_control import RedisAdmissionController, build_redis_controller
+from .request_limits import IngestionBodyLimit
 from .templates import TemplateParser, build_template_parser
 
 try:
@@ -90,7 +91,16 @@ def create_app() -> Any:
     if auth_mode == "token" and len(api_token) < 32:
         raise RuntimeError("LOGSIGHT_API_TOKEN must contain at least 32 characters in token mode")
 
+    max_body_bytes_raw = os.getenv("LOGSIGHT_API_MAX_BODY_BYTES", "1048576")
+    try:
+        max_body_bytes = int(max_body_bytes_raw)
+    except ValueError as exc:
+        raise RuntimeError("LOGSIGHT_API_MAX_BODY_BYTES must be a positive integer") from exc
+    if not 1 <= max_body_bytes <= 16 * 1024 * 1024:
+        raise RuntimeError("LOGSIGHT_API_MAX_BODY_BYTES must be between 1 and 16777216")
+
     app = FastAPI(title="LogSight-AI Enterprise API", version="0.2.0")
+    app.add_middleware(IngestionBodyLimit, max_body_bytes=max_body_bytes)
 
     @app.middleware("http")
     async def require_api_token(request: Request, call_next: Any) -> Response:
