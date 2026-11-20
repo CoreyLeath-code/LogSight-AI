@@ -7,6 +7,7 @@ stays dependency-light. Production deployments can swap them for native SDKs.
 from __future__ import annotations
 
 import json
+import ssl
 import urllib.parse
 import urllib.request
 import uuid
@@ -14,20 +15,68 @@ from typing import Any, cast
 
 
 class ClickHouseStore:
-    def __init__(self, base_url: str = "http://localhost:8123", database: str = "logsight") -> None:
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8123",
+        database: str = "logsight",
+        *,
+        username: str | None = None,
+        password: str | None = None,
+        ca_file: str | None = None,
+    ) -> None:
+        parsed = urllib.parse.urlsplit(base_url)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or parsed.path not in {"", "/"}
+        ):
+            raise ValueError("ClickHouse URL must be an HTTP(S) origin without credentials")
+        if not database or not database.replace("_", "").isalnum():
+            raise ValueError("ClickHouse database name must be alphanumeric or underscores")
+        if (username is None) != (password is None):
+            raise ValueError("ClickHouse username and password must be configured together")
+        if username is not None:
+            if not username or not password or "\\r" in username or "\\n" in username:
+                raise ValueError("Invalid ClickHouse authentication configuration")
+            if parsed.scheme != "https":
+                raise ValueError("ClickHouse credentials require HTTPS")
+        if ca_file and parsed.scheme != "https":
+            raise ValueError("ClickHouse custom CA requires HTTPS")
         self.base_url = base_url.rstrip("/")
         self.database = database
+        self.username = username
+        self.password = password
+        try:
+            self._ssl_context = (
+                ssl.create_default_context(cafile=ca_file or None)
+                if parsed.scheme == "https"
+                else None
+            )
+        except (OSError, ssl.SSLError) as exc:
+            raise ValueError("Invalid ClickHouse CA configuration") from exc
 
     def execute(self, query: str, data: str | None = None) -> bytes:
         params = urllib.parse.urlencode({"database": self.database, "query": query})
+        headers = {"Content-Type": "application/json"}
+        if self.username is not None:
+            headers["X-ClickHouse-User"] = self.username
+            headers["X-ClickHouse-Key"] = self.password or ""
         request = urllib.request.Request(
             f"{self.base_url}/?{params}",
             data=data.encode() if data is not None else None,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310
-            return cast(bytes, response.read())
+        if self._ssl_context is not None:
+            response = urllib.request.urlopen(request, timeout=10, context=self._ssl_context)  # nosec B310
+        else:
+            response = urllib.request.urlopen(request, timeout=10)  # nosec B310
+        with response as result:
+            return cast(bytes, result.read())
 
     def insert_events(self, events: list[dict[str, Any]]) -> None:
         if not events:

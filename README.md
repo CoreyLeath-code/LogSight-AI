@@ -475,6 +475,20 @@ credentials/transport, and successful tests with authenticated infrastructure.
 This feature adds configuration support; it does not secure the default
 local Compose stack or complete Phase 3.
 
+### Verified ClickHouse HTTPS and authentication configuration
+
+The experimental Kafka sink now supports a ClickHouse HTTPS origin, verified
+TLS certificates (including a custom CA), and scoped username/password
+headers. User information or secrets embedded in the URL, incomplete
+credentials, and credentials over HTTP are rejected. Local unauthenticated
+HTTP remains available for disposable developer environments. See
+[`.env.example`](.env.example) for the connection settings.
+
+This is a **client-side configuration milestone**, not proof that a
+ClickHouse cluster, user permissions, TLS server, secret manager or
+authenticated recovery drill has been provisioned. Phase 3 production
+approval remains open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -494,6 +508,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** verified ClickHouse HTTPS and scoped client
+  credential configuration, rejecting plaintext secret transport
+  ([PR #71](https://github.com/CoreyLeath-code/LogSight-AI/pull/71)).
 - [x] **Phase 3 foundation:** shared Kafka TLS/SASL settings and fail-closed
   transport configuration checks for API, consumer and restricted DLQ
   ([PR #70](https://github.com/CoreyLeath-code/LogSight-AI/pull/70)).

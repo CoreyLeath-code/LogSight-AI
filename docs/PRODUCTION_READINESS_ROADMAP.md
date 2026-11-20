@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — ClickHouse HTTPS client foundation:** verified TLS,
+  optional CA and header-based credentials for the experimental consumer
+  ([PR #71](https://github.com/CoreyLeath-code/LogSight-AI/pull/71)).
 - [x] **Phase 3 — Kafka transport security foundation:** TLS context,
   SASL_SSL configuration and rejection of plaintext credential transport
   ([PR #70](https://github.com/CoreyLeath-code/LogSight-AI/pull/70)).
@@ -348,6 +351,20 @@ and the resulting verified TLS context.
 ACL, secret-store injection, broker identity provisioning, authenticated
 live recovery test, mTLS client certificate policy, credential rotation,
 or secured ClickHouse endpoint is certified. Phase 3 exit remains open.
+
+### ClickHouse HTTPS client authentication foundation (candidate PR)
+
+The ClickHouse HTTP adapter supports verified HTTPS, optional private CA,
+username/password authentication via request headers, and strict URL
+validation. Credential pairs on plaintext HTTP and URL-embedded credentials
+are rejected. The experimental consumer accepts those values from
+environment-based secret injection; tests inspect the TLS context and
+credential placement without connecting to a real database.
+
+**Open requirements:** deployed HTTPS endpoint, secret-manager injection,
+least-privilege ClickHouse database permissions, credential rotation,
+identity isolation, audit logging, approved retention, and a live
+authenticated broker/database recovery test.
 
 ## Phase 3 — Durable ingestion and storage
 
