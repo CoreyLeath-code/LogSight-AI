@@ -11,6 +11,35 @@ This roadmap is a promotion contract, not a list of features. An item is complet
 only when its code, configuration, automated tests, operational evidence, and
 owner approval are linked from a reviewed pull request or release record.
 
+## Verified implementation milestones (not phase approvals)
+
+The following items were merged into `main` after repository CI validation.
+These checkmarks cover the named code/test milestone only. None of Phases 0–6
+has yet met its full deployment-specific exit criteria.
+
+- [x] **Phase 1 — API authentication foundation:** optional bearer-token guard,
+  startup checks, and negative authentication tests
+  ([PR #55](https://github.com/CoreyLeath-code/LogSight-AI/pull/55)).
+- [x] **Phase 1 — bounded request bodies:** ingestion size caps and streamed
+  request tests ([PR #57](https://github.com/CoreyLeath-code/LogSight-AI/pull/57)).
+- [x] **Phase 2 — targeted API redaction:** selected credentials/emails redacted
+  ahead of parsing, local caching and responses
+  ([PR #56](https://github.com/CoreyLeath-code/LogSight-AI/pull/56)).
+- [x] **Phase 3 — Kafka producer contract:** broker acknowledgement,
+  idempotent producer configuration and publish timeouts
+  ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
+- [x] **Phase 3 — experimental API producer path:** optional Kafka publish
+  before success response, with negative delivery tests
+  ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — experimental ClickHouse sink:** offset commit after successful
+  insert, schema tests and storage-failure handling
+  ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
+
+**Not yet complete:** none of these milestones proves end-to-end exactly-once
+delivery, multi-tenant security, approved privacy controls or staging durability.
+The phase-level checkboxes below remain unchecked until the documented exit
+evidence is available.
+
 ## Scope and non-goals
 
 The supported production target is an authenticated service that ingests
