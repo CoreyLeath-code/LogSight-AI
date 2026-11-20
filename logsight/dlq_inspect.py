@@ -20,7 +20,7 @@ def main() -> int:
         if args.path.stat().st_size > 2 * 1024 * 1024:
             raise ValueError("DLQ envelope is too large")
         summary = inspect_quarantine(args.path.read_bytes())
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError):
         # Avoid printing exception details that might include file paths
         # or untrusted contents.
         print("DLQ inspection failed: invalid or inaccessible envelope", file=sys.stderr)
