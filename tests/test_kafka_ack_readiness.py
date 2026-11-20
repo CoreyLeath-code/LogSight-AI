@@ -47,8 +47,11 @@ def test_publish_failure_degrades_until_confirmed_recovery(
         assert stream.is_ready()
         event = enrich(parse_line("INFO test"))
         expected = (
-            TimeoutError if failure == "timeout" else
-            asyncio.CancelledError if failure == "cancel" else ConnectionError
+            TimeoutError
+            if failure == "timeout"
+            else asyncio.CancelledError
+            if failure == "cancel"
+            else ConnectionError
         )
         with pytest.raises(expected):
             await stream.publish(event)
