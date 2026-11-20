@@ -59,6 +59,7 @@ def test_idempotent_acknowledged_publish(monkeypatch: pytest.MonkeyPatch) -> Non
             "bootstrap_servers": "localhost:9092",
             "acks": "all",
             "enable_idempotence": True,
+            "security_protocol": "PLAINTEXT",
         }
     ]
     assert publishes[0][0] == "logs"
