@@ -12,6 +12,7 @@ from .distributed import CeleryInferenceDispatcher, build_celery_dispatcher
 from .enterprise import EnrichedLog, enrich, score_event
 from .observability import configure_tracing, correlate_with_active_span, span
 from .parser import parse_line
+from .redaction import redact_log_line
 from .redis_control import RedisAdmissionController, build_redis_controller
 from .templates import TemplateParser, build_template_parser
 
@@ -50,7 +51,7 @@ async def _process(item: LogPayload) -> tuple[EnrichedLog, Any, str | None]:
     with span("logsight.ingest", service=item.service, source=item.source) as _:
         event = correlate_with_active_span(
             enrich(
-                parse_line(item.line),
+                parse_line(redact_log_line(item.line)),
                 service=item.service,
                 source=item.source,
                 host=item.host,
