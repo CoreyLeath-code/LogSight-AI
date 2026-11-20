@@ -475,6 +475,20 @@ credentials/transport, and successful tests with authenticated infrastructure.
 This feature adds configuration support; it does not secure the default
 local Compose stack or complete Phase 3.
 
+### Verified ClickHouse HTTPS and authentication configuration
+
+The experimental Kafka sink now supports a ClickHouse HTTPS origin, verified
+TLS certificates (including a custom CA), and scoped username/password
+headers. User information or secrets embedded in the URL, incomplete
+credentials, and credentials over HTTP are rejected. Local unauthenticated
+HTTP remains available for disposable developer environments. See
+[`.env.example`](.env.example) for the connection settings.
+
+This is a **client-side configuration milestone**, not proof that a
+ClickHouse cluster, user permissions, TLS server, secret manager or
+authenticated recovery drill has been provisioned. Phase 3 production
+approval remains open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
