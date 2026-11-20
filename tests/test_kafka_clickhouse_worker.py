@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
+from collections import namedtuple
+from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
@@ -78,11 +81,16 @@ def test_invalid_envelopes_fail_closed(payload: bytes) -> None:
         decode_event(payload)
 
 
-def test_storage_failure_does_not_advance_consumer_offset() -> None:
+def test_storage_failure_does_not_advance_consumer_offset(monkeypatch: pytest.MonkeyPatch) -> None:
+    tp = namedtuple("TopicPartition", ["topic", "partition"])
+    module = ModuleType("aiokafka")
+    module.TopicPartition = tp  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
     class Consumer:
         commits = 0
 
-        async def commit(self) -> None:
+        async def commit(self, offsets: Any) -> None:
+            assert offsets == {tp("logs", 2): 42}
             self.commits += 1
 
     class Store:
@@ -97,9 +105,10 @@ def test_storage_failure_does_not_advance_consumer_offset() -> None:
 
     async def exercise() -> None:
         consumer = Consumer()
+        message = SimpleNamespace(value=encoded(), topic="logs", partition=2, offset=41)
         store = Store(fail=True)
         with pytest.raises(ConnectionError):
-            await persist_message(encoded(), consumer, store)  # type: ignore[arg-type]
+            await persist_message(message, consumer, store)  # type: ignore[arg-type]
         assert consumer.commits == 0
         assert store.events == []
 
@@ -115,7 +124,7 @@ def test_poison_record_does_not_advance_offset() -> None:
     class Consumer:
         committed = False
 
-        async def commit(self) -> None:
+        async def commit(self, offsets: Any) -> None:
             self.committed = True
 
     class Store:
@@ -125,7 +134,11 @@ def test_poison_record_does_not_advance_offset() -> None:
     async def exercise() -> None:
         consumer = Consumer()
         with pytest.raises(ValueError):
-            await persist_message(b"{}", consumer, Store())  # type: ignore[arg-type]
+            await persist_message(
+                SimpleNamespace(value=b"{}", topic="logs", partition=2, offset=41),
+                consumer,
+                Store(),  # type: ignore[arg-type]
+            )
         assert consumer.committed is False
 
     asyncio.run(exercise())
