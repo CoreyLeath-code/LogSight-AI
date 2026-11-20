@@ -224,6 +224,21 @@ creates a new identifier. A reviewed idempotency-key contract, database
 deduplication strategy, replay tests, and actual broker/storage recovery evidence
 are required before the Phase 3 exit gate can close.
 
+### HTTP retry identity propagation (candidate PR)
+
+An optional canonical UUIDv4 `Idempotency-Key` header on the single-log API
+endpoint replaces that generated event's identifier. The same header on a
+later client retry produces the same UUID, so the broker record and stored row
+can be correlated after ambiguous acknowledgements. Validation rejects
+invalid/noncanonical keys; default calls and batch elements still receive
+independent UUIDs.
+
+**Not completed:** this does not guarantee a single Kafka publish or
+ClickHouse row. It does not bind a key to a tenant, immutable payload,
+retention period, response cache, or transactional batch. Durable deduplication
+and tenant-scoped authorization must be implemented and reviewed before
+calling this an idempotency mechanism.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
