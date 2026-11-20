@@ -35,8 +35,18 @@ def encoded(event: dict[str, Any] | None = None) -> bytes:
 def test_schema_matches_clickhouse_insert_contract_and_redacts() -> None:
     row = decode_event(encoded())
     assert set(row) == {
-        "timestamp", "level", "service", "source", "host", "message",
-        "raw", "fingerprint", "trace_id", "span_id", "template", "attributes",
+        "timestamp",
+        "level",
+        "service",
+        "source",
+        "host",
+        "message",
+        "raw",
+        "fingerprint",
+        "trace_id",
+        "span_id",
+        "template",
+        "attributes",
     }
     assert row["timestamp"] == "2026-11-19 13:14:15.123"
     assert "secret123" not in row["raw"]
