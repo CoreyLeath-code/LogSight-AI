@@ -215,3 +215,48 @@ def test_metadata_success_does_not_erase_failed_publish(
         assert not stream.is_ready()
 
     asyncio.run(asyncio.wait_for(scenario(), timeout=5))
+
+
+def test_unexpected_monitor_stop_fails_readiness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A dead background monitor cannot leave a stale ready signal."""
+
+    class Metadata:
+        def partitions_for_topic(self, topic: str) -> set[int]:
+            return {0}
+
+    class Client:
+        async def fetch_all_metadata(self) -> Metadata:
+            return Metadata()
+
+    class Producer:
+        def __init__(self, **kwargs: Any) -> None:
+            self.client = Client()
+
+        async def start(self) -> None:
+            return None
+
+        async def stop(self) -> None:
+            return None
+
+    module = ModuleType("aiokafka")
+    module.AIOKafkaProducer = lambda **kwargs: Producer()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
+    monkeypatch.setenv("LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS", "5")
+
+    async def scenario() -> None:
+        stream = KafkaStream("broker:9092", "logs")
+        await stream.start()
+        await stream._probe_metadata()
+        assert stream.is_ready()
+        assert stream._monitor_task is not None
+        stream._monitor_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await stream._monitor_task
+        assert not stream.is_ready()
+        await stream._probe_metadata()
+        assert not stream.is_ready()
+        await stream.stop()
+
+    asyncio.run(asyncio.wait_for(scenario(), timeout=5))

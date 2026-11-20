@@ -134,7 +134,14 @@ class KafkaStream:
 
         This is NOT continuous broker reachability or a delivery SLA check.
         """
-        return self._producer is not None and self._ready and self._metadata_ready
+        # A stopped/crashed monitor must never leave a stale healthy probe.
+        # Deliberately fail closed rather than silently restarting a task here.
+        monitor_running = not self.monitor_interval_seconds or (
+            self._monitor_task is not None and not self._monitor_task.done()
+        )
+        return (
+            self._producer is not None and self._ready and self._metadata_ready and monitor_running
+        )
 
     async def stop(self) -> None:
         self._ready = False

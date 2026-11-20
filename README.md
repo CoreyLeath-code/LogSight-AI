@@ -529,7 +529,10 @@ connection. The request is bounded by a five-second maximum, and unavailable
 or empty topic metadata causes `/ready` to return HTTP 503. Successful
 metadata refresh can restore the metadata-health signal during idle periods;
 readiness also requires that no subsequent publish failure remains unresolved.
-Only a confirmed successful publish can clear a failed-publish signal. The monitor stops with the producer lifecycle.
+Only a confirmed successful publish can clear a failed-publish signal. The monitor stops with the producer lifecycle. If the enabled monitor task
+unexpectedly exits, readiness fails closed rather than trusting stale metadata.
+The service requires operator investigation/restart; the probe does not silently
+relaunch the task.
 
 **Boundary:** topic metadata reachability is not the same as a successful
 write acknowledgement, in-sync-replica durability, healthy downstream
