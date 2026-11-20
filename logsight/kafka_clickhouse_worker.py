@@ -36,8 +36,7 @@ def decode_event(payload: bytes) -> dict[str, Any]:
                 raise ValueError("Kafka event has an invalid optional field")
         attributes = value.get("attributes", {})
         if not isinstance(attributes, dict) or not all(
-            isinstance(key, str) and isinstance(item, str)
-            for key, item in attributes.items()
+            isinstance(key, str) and isinstance(item, str) for key, item in attributes.items()
         ):
             raise ValueError("Kafka event attributes must be a string map")
         raw_timestamp = value["timestamp"]
@@ -49,16 +48,12 @@ def decode_event(payload: bytes) -> dict[str, Any]:
     except (KeyError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ValueError("Invalid Kafka event schema") from exc
 
-    normalized: dict[str, Any] = {
-        key: redact_log_line(value[key]) for key in _FIELDS
-    }
-    normalized["timestamp"] = timestamp.astimezone(timezone.utc).strftime(
-        "%Y-%m-%d %H:%M:%S.%f"
-    )[:-3]
+    normalized: dict[str, Any] = {key: redact_log_line(value[key]) for key in _FIELDS}
+    normalized["timestamp"] = timestamp.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")[
+        :-3
+    ]
     for key in _OPTIONAL_FIELDS:
-        normalized[key] = (
-            redact_log_line(value[key]) if value.get(key) is not None else None
-        )
+        normalized[key] = redact_log_line(value[key]) if value.get(key) is not None else None
     normalized["attributes"] = json.dumps(
         {key: redact_log_line(item) for key, item in attributes.items()},
         separators=(",", ":"),
@@ -67,9 +62,7 @@ def decode_event(payload: bytes) -> dict[str, Any]:
     return normalized
 
 
-async def persist_message(
-    payload: bytes, consumer: Any, store: ClickHouseStore
-) -> None:
+async def persist_message(payload: bytes, consumer: Any, store: ClickHouseStore) -> None:
     """Commit the consumer offset only after a successful storage response."""
     event = decode_event(payload)
     await asyncio.to_thread(store.insert_events, [event])
