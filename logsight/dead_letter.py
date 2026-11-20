@@ -12,9 +12,7 @@ import json
 from typing import Any
 
 
-def quarantine_envelope(
-    payload: bytes, *, topic: str, partition: int, offset: int
-) -> bytes:
+def quarantine_envelope(payload: bytes, *, topic: str, partition: int, offset: int) -> bytes:
     """Capture a bounded broker record without exposing its body in diagnostics."""
     if len(payload) > 1024 * 1024:
         raise ValueError("Poison record exceeds the quarantine limit")
