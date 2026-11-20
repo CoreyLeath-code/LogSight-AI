@@ -17,6 +17,23 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### Experimental broker-acknowledged API ingestion
+
+Set `LOGSIGHT_API_KAFKA_ENABLED=true`, `KAFKA_BOOTSTRAP_SERVERS`, and
+`LOGSIGHT_KAFKA_TOPIC` to opt into broker-acknowledged ingestion. The API
+starts/stops the Kafka producer with its application lifespan and returns
+HTTP 503 if an acknowledgement cannot be confirmed. This mode requires
+the optional `kafka` dependency and must not be combined with the current
+Redis admission controller, whose dedup keys are committed before broker
+acknowledgements. For an experimental isolated deployment, omit
+`LOGSIGHT_REDIS_URL` and install `.[api,kafka]`.
+
+**Delivery caveats:** HTTP 503 does not prove broker rejection. Retrying may
+duplicate events. Batch submissions are not atomic: earlier events may have
+been acknowledged before a later event fails. The process-local recent-event
+cache is not durable, and no ClickHouse consumer or cross-tenant isolation is
+implemented. This mode is for controlled evaluation, not production.
+
 ### Bounded API ingestion bodies (incremental)
 
 The API now limits request bodies for `POST /v1/logs` and
