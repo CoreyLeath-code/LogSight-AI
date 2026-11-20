@@ -356,10 +356,40 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] RAG incident investigator with versioned runbooks/commits
 - [x] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
+## Production-readiness implementation tracker
+
+Checked boxes below mean the **specific implementation milestone** was merged
+with passing repository CI; they do not mean the entire production phase passed
+its operational launch gate. Phase 0–6 promotion checkboxes remain open until
+the full exit evidence and owner approval are recorded.
+
+- [x] **Phase 1 foundation:** optional bearer-token API guard and negative
+  authorization tests ([PR #55](https://github.com/CoreyLeath-code/LogSight-AI/pull/55)).
+- [x] **Phase 1 foundation:** ingestion body-size limit and streamed-payload
+  regression tests ([PR #57](https://github.com/CoreyLeath-code/LogSight-AI/pull/57)).
+- [x] **Phase 2 foundation:** selected credentials and email addresses redacted
+  before API processing/caching ([PR #56](https://github.com/CoreyLeath-code/LogSight-AI/pull/56)).
+- [x] **Phase 3 foundation:** Kafka producer acknowledgements and bounded
+  publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
+- [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
+  ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** experimental at-least-once Kafka-to-ClickHouse
+  sink with failure-contract tests
+  ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
+- [ ] **Phase 1 exit:** tenant-scoped authorization, workload identity,
+  ingress controls, audited access and security sign-off.
+- [ ] **Phase 2 exit:** approved data classification, comprehensive redaction,
+  retention/deletion and key-management evidence.
+- [ ] **Phase 3 exit:** stable event IDs, deduplication, DLQ/replay,
+  authenticated dependencies, live recovery drills and durable query path.
+
+See the [detailed roadmap](docs/PRODUCTION_READINESS_ROADMAP.md) for all
+remaining Phase 0–6 requirements.
+
 ## Production-readiness roadmap
 
-The next roadmap focuses on proof that the whole service can be safely operated,
-not additional adapters. All items remain open until their required exit evidence
+The remaining roadmap focuses on proof that the whole service can be safely operated,
+not additional adapters. **Phase-level** items remain open until their exit evidence
 has been reviewed and linked from a release record.
 
 - [ ] **Phase 0 — Ownership and release boundary:** accountable owners, SLOs,
