@@ -99,10 +99,10 @@ def test_storage_failure_does_not_advance_consumer_offset(monkeypatch: pytest.Mo
             self.fail = fail
             self.events: list[dict[str, Any]] = []
 
-        def insert_events(self, events: list[dict[str, Any]]) -> None:
+        def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
             if self.fail:
                 raise ConnectionError("database unavailable")
-            self.events.extend(events)
+            self.events.append(event)
 
     async def exercise() -> None:
         consumer = Consumer()
@@ -129,7 +129,7 @@ def test_poison_record_does_not_advance_offset() -> None:
             self.committed = True
 
     class Store:
-        def insert_events(self, events: list[dict[str, Any]]) -> None:
+        def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
             raise AssertionError("poison event should not be persisted")
 
     async def exercise() -> None:
@@ -171,7 +171,7 @@ def test_different_partition_offsets_never_advance_together(
         def __init__(self) -> None:
             self.fail = False
 
-        def insert_events(self, events: list[dict[str, Any]]) -> None:
+        def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
             if self.fail:
                 raise OSError("ClickHouse temporarily unavailable")
 

@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — bounded ClickHouse retry deduplication:** stable per-event
+  insert tokens and opt-in SQL migration; not a uniqueness guarantee
+  ([PR #68](https://github.com/CoreyLeath-code/LogSight-AI/pull/68)).
 - [x] **Phase 3 — partition-scoped offsets:** commit only the successfully
   processed source partition's next offset, including the DLQ path
   ([PR #67](https://github.com/CoreyLeath-code/LogSight-AI/pull/67)).
@@ -292,6 +295,20 @@ and the DLQ acknowledgement path.
 **Not phase completion:** inserts can still be duplicated if a broker offset
 commit fails after a successful ClickHouse write. Real rebalance, concurrent
 worker, retention, replay, and broker failure tests remain required.
+
+### Bounded ClickHouse insert deduplication (candidate PR)
+
+The consumer uses each event's canonical UUID as a deterministic
+ClickHouse insert-deduplication token for its single-row INSERT. Initial
+non-replicated MergeTree DDL configures
+`non_replicated_deduplication_window=10000`; an explicit migration is
+provided for existing tables. Tests verify deterministic tokens, distinct
+IDs, rejection of malformed IDs, and propagation of database failures.
+
+**Limit:** deduplication is a finite block-history mechanism, not an
+event_id uniqueness constraint or cross-cluster transaction. Live
+integration testing and restart/rebalance fault injection are pending;
+multi-tenant identity, retention and replay control are unresolved.
 
 ## Phase 3 — Durable ingestion and storage
 

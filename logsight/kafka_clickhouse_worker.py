@@ -95,7 +95,7 @@ async def commit_source_offset(consumer: Any, message: Any) -> None:
 async def persist_message(message: Any, consumer: Any, store: ClickHouseStore) -> None:
     """Acknowledge only this partition after the storage insert succeeds."""
     event = decode_event(message.value)
-    await asyncio.to_thread(store.insert_events, [event])
+    await asyncio.to_thread(store.insert_event_deduplicated, event)
     await commit_source_offset(consumer, message)
 
 
