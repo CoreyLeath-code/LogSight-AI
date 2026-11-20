@@ -31,9 +31,11 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
-- [ ] **Phase 4 — independent readiness signals (PR pending):** metadata
-  reachability must never erase a failed broker publish; passing tests and
-  final CI are required before marking this milestone complete.
+- [x] **Phase 4 — independent readiness signals:** metadata reachability
+  cannot erase a failed broker publish; confirmed write and metadata status
+  are checked separately ([PR #75](https://github.com/CoreyLeath-code/LogSight-AI/pull/75)).
+- [ ] **Phase 4 — failed monitor supervision (PR pending):** a stopped
+  background monitor must fail readiness closed; verification is required.
 - [x] **Phase 4 — optional Kafka idle connectivity foundation:** bounded
   metadata probes, failure/recovery tests and shutdown cleanup; not a write SLA
   ([PR #74](https://github.com/CoreyLeath-code/LogSight-AI/pull/74)).
