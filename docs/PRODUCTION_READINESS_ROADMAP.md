@@ -134,6 +134,23 @@ A publish timeout is an indeterminate outcome and is **not** proof of rejection
 by the broker. Producer idempotence alone does not make the end-to-end pipeline
 exactly-once.
 
+### Experimental API-to-Kafka acknowledgement path (candidate PR)
+
+When explicitly enabled, the FastAPI gateway starts a Kafka producer during
+application lifespan, publishes the redacted event before returning an API
+success, and maps unconfirmed broker acknowledgements to HTTP 503 without
+adding the event to local metrics or recent-event cache. Unit tests use a
+fake producer to verify success and failure cases. Default local behavior
+remains unchanged.
+
+**This does not close Phase 3:** the broker must still be configured with
+authenticated transport, ACLs, replication and retention; there is no
+durable ClickHouse consumer, idempotency/replay contract, staging drill,
+or tenant-safe recent-event store. Retrying after HTTP 503 can duplicate
+a broker-accepted event. Batch ingestion can partially succeed before a
+failure. Redis admission mode is blocked in experimental Kafka mode until
+the pre-ack deduplication ordering is corrected.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
