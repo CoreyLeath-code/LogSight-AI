@@ -149,8 +149,8 @@ def create_app() -> Any:
 
     @app.middleware("http")
     async def require_api_token(request: Request, call_next: Any) -> Response:
-        # /health is intentionally unauthenticated for liveness probes.
-        if auth_mode == "token" and request.url.path != "/health":
+        # Health and readiness probes must not require application bearer tokens.
+        if auth_mode == "token" and request.url.path not in {"/health", "/ready"}:
             authorization = request.headers.get("authorization", "")
             scheme, separator, candidate = authorization.partition(" ")
             if (
@@ -169,6 +169,15 @@ def create_app() -> Any:
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "logsight-api"}
+
+    @app.get("/ready")
+    async def ready(request: Request) -> dict[str, str]:
+        # Keep this lightweight; no Kafka network polling per HTTP probe.
+        # The producer state only reflects successful local initialization.
+        stream = getattr(request.app.state, "kafka_stream", None)
+        if kafka_stream is not None and (stream is None or not stream.is_ready()):
+            raise HTTPException(status_code=503, detail="Kafka producer not ready")
+        return {"status": "ready", "service": "logsight-api"}
 
     @app.get("/metrics")
     async def metrics() -> Response:

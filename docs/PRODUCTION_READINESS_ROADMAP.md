@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 — local producer readiness foundation:** independent
+  liveness and Kafka producer lifecycle readiness, Helm probe and tests
+  ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
 - [x] **Phase 3 — ClickHouse HTTPS client foundation:** verified TLS,
   optional CA and header-based credentials for the experimental consumer
   ([PR #71](https://github.com/CoreyLeath-code/LogSight-AI/pull/71)).
@@ -384,6 +387,19 @@ authenticated broker/database recovery test.
 **Exit evidence:** end-to-end integration tests against deployment-like
 dependencies, durable-delivery dashboards, documented recovery procedure, and a
 successful replay drill.
+
+### API liveness/readiness separation (candidate PR)
+
+The API exposes `/health` for independent process liveness and `/ready`
+for local Kafka-producer lifecycle readiness when broker-acknowledged
+ingestion is enabled. The Helm chart routes the readiness probe to
+`/ready`. Tests check healthy/degraded readiness and that application
+bearer tokens are still required for operational endpoints.
+
+**Limit:** this is lifecycle-aware, not a continuous external dependency
+health check. Kafka broker connectivity after startup, ClickHouse health,
+Redis, inference workers, multi-pod probe behavior, and staging alerts
+must still be tested. No Phase 4 production exit is claimed.
 
 ## Phase 4 — Availability, resilience, and observability
 

@@ -489,6 +489,21 @@ ClickHouse cluster, user permissions, TLS server, secret manager or
 authenticated recovery drill has been provisioned. Phase 3 production
 approval remains open.
 
+### Separate API liveness and Kafka producer readiness
+
+The API retains unauthenticated `GET /health` for liveness and adds
+unauthenticated `GET /ready` for deployment readiness. When experimental
+Kafka publishing is enabled, readiness returns HTTP 503 if the producer
+has not been initialized or its local lifecycle is not ready. The Helm
+deployment uses `/ready` for readiness and continues using `/health`
+for liveness.
+
+**Important limitation:** producer initialization is not a continuous
+broker health check. This probe does not verify recent Kafka acknowledgements,
+ClickHouse availability, Redis or inference workers, authenticated upstream
+connectivity, or durable end-to-end delivery. Deployment-scale readiness
+and Phase 4 exit evidence remain open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -508,6 +523,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 foundation:** separate API liveness and Kafka-producer
+  lifecycle readiness with Helm readiness probe and degraded-state tests
+  ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
 - [x] **Phase 3 foundation:** verified ClickHouse HTTPS and scoped client
   credential configuration, rejecting plaintext secret transport
   ([PR #71](https://github.com/CoreyLeath-code/LogSight-AI/pull/71)).

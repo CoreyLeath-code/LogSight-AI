@@ -60,7 +60,7 @@ spec:
             {{- toYaml .Values.probes.liveness | nindent 12 }}
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: http
             {{- toYaml .Values.probes.readiness | nindent 12 }}
           volumeMounts:
