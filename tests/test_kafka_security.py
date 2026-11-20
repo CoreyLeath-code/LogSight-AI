@@ -27,7 +27,10 @@ def test_default_dev_mode_is_explicit_plaintext() -> None:
             "LOGSIGHT_KAFKA_SASL_USERNAME": "test",
             "LOGSIGHT_KAFKA_SASL_PASSWORD": "test",
         },
-        {"LOGSIGHT_KAFKA_SECURITY_PROTOCOL": "SSL", "LOGSIGHT_KAFKA_SSL_CA_FILE": "/missing-ca.pem"},
+        {
+            "LOGSIGHT_KAFKA_SECURITY_PROTOCOL": "SSL",
+            "LOGSIGHT_KAFKA_SSL_CA_FILE": "/missing-ca.pem",
+        },
     ],
 )
 def test_invalid_and_unencrypted_secret_configurations_are_rejected(
