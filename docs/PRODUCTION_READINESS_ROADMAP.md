@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — Kafka transport security foundation:** TLS context,
+  SASL_SSL configuration and rejection of plaintext credential transport
+  ([PR #70](https://github.com/CoreyLeath-code/LogSight-AI/pull/70)).
 - [x] **Phase 3 — opt-in recovery-test harness:** replay and injected
   storage/offset failure tests with a disposable infrastructure runbook;
   live execution evidence is still pending
