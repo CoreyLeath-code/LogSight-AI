@@ -31,6 +31,10 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — opt-in recovery-test harness:** replay and injected
+  storage/offset failure tests with a disposable infrastructure runbook;
+  live execution evidence is still pending
+  ([PR #69](https://github.com/CoreyLeath-code/LogSight-AI/pull/69)).
 - [x] **Phase 3 — bounded ClickHouse retry deduplication:** stable per-event
   insert tokens and opt-in SQL migration; not a uniqueness guarantee
   ([PR #68](https://github.com/CoreyLeath-code/LogSight-AI/pull/68)).
