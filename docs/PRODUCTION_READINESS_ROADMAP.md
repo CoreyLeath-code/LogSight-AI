@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — stable event identity:** UUID propagation through Kafka,
+  ClickHouse schema migration and replay ID tests
+  ([PR #63](https://github.com/CoreyLeath-code/LogSight-AI/pull/63)).
 - [x] **Phase 3 — experimental ClickHouse sink:** offset commit after successful
   insert, schema tests and storage-failure handling
   ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
@@ -206,6 +209,20 @@ A production promotion still requires reviewed stable event identifiers,
 database idempotency, DLQ/replay policy, TLS/ACLs, authenticated dependencies,
 rebalances and partition recovery, load tests, live dependency integration,
 backup/restore, and owner approval.
+
+### Stable event identifiers (candidate PR)
+
+New enriched events are assigned UUID identifiers, serialized into the Kafka
+envelope, validated by the ClickHouse worker, and persisted in an additive
+ClickHouse column. Replays of the same broker record carry the same identifier.
+New databases include the column and existing installations require an explicit
+additive SQL migration.
+
+This is traceability groundwork, **not duplicate prevention**: the current
+MergeTree table can store multiple rows with the same UUID, and an HTTP retry
+creates a new identifier. A reviewed idempotency-key contract, database
+deduplication strategy, replay tests, and actual broker/storage recovery evidence
+are required before the Phase 3 exit gate can close.
 
 ## Phase 3 — Durable ingestion and storage
 

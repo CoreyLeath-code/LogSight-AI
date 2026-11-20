@@ -356,6 +356,22 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] RAG incident investigator with versioned runbooks/commits
 - [x] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
+### Stable event identity for the experimental pipeline
+
+New normalized events receive a UUID event identifier. The identifier travels
+with the Kafka event envelope and into the ClickHouse event row; replaying
+the **same** Kafka record preserves its UUID. The initial ClickHouse schema
+includes `event_id`; existing databases must apply
+[`001_event_id.sql`](deploy/clickhouse/migrations/001_event_id.sql)
+before running the updated consumer. The migration does not rewrite existing
+event identities.
+
+**Boundary:** This does not deduplicate ClickHouse rows. If Kafka redelivers
+an already-written message, the worker can insert it again with the **same**
+`event_id`; a fresh HTTP retry generates a **new** UUID without a client
+idempotency contract. Do not count this as replay safety, exactly-once
+delivery, or phase-level production readiness.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -375,6 +391,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** assign event UUIDs and propagate them through
+  Kafka into ClickHouse; schema migration and replay identity tests
+  ([PR #63](https://github.com/CoreyLeath-code/LogSight-AI/pull/63)).
 - [x] **Phase 3 foundation:** experimental at-least-once Kafka-to-ClickHouse
   sink with failure-contract tests
   ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
@@ -382,7 +401,7 @@ the full exit evidence and owner approval are recorded.
   ingress controls, audited access and security sign-off.
 - [ ] **Phase 2 exit:** approved data classification, comprehensive redaction,
   retention/deletion and key-management evidence.
-- [ ] **Phase 3 exit:** stable event IDs, deduplication, DLQ/replay,
+- [ ] **Phase 3 exit:** client retry identity, deduplication, DLQ/replay,
   authenticated dependencies, live recovery drills and durable query path.
 
 See the [detailed roadmap](docs/PRODUCTION_READINESS_ROADMAP.md) for all

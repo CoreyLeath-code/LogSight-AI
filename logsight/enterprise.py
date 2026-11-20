@@ -11,6 +11,7 @@ import json
 import os
 import re
 import urllib.request
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -34,6 +35,7 @@ class EnrichedLog:
     template: str | None = None
     fingerprint: str | None = None
     attributes: dict[str, str] = field(default_factory=dict)
+    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

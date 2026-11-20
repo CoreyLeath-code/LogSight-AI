@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -39,6 +40,13 @@ def decode_event(payload: bytes) -> dict[str, Any]:
             isinstance(key, str) and isinstance(item, str) for key, item in attributes.items()
         ):
             raise ValueError("Kafka event attributes must be a string map")
+        raw_id = value.get("event_id")
+        if not isinstance(raw_id, str):
+            raise ValueError("Kafka event requires event_id")
+        try:
+            event_id = str(uuid.UUID(raw_id))
+        except ValueError as exc:
+            raise ValueError("Kafka event_id must be a valid UUID") from exc
         raw_timestamp = value["timestamp"]
         if not isinstance(raw_timestamp, str):
             raise ValueError("Kafka event timestamp must be text")
@@ -49,6 +57,7 @@ def decode_event(payload: bytes) -> dict[str, Any]:
         raise ValueError("Invalid Kafka event schema") from exc
 
     normalized: dict[str, Any] = {key: redact_log_line(value[key]) for key in _FIELDS}
+    normalized["event_id"] = event_id
     normalized["timestamp"] = timestamp.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")[
         :-3
     ]
