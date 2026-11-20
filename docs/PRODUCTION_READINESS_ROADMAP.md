@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — malformed-event quarantine foundation:** optional restricted
+  Kafka DLQ with source-offset commit gated on DLQ acknowledgement
+  ([PR #65](https://github.com/CoreyLeath-code/LogSight-AI/pull/65)).
 - [x] **Phase 3 — client retry identity foundation:** validated optional
   UUIDv4 header carried through the experimental event pipeline; duplicate
   writes remain possible ([PR #64](https://github.com/CoreyLeath-code/LogSight-AI/pull/64)).
