@@ -72,9 +72,7 @@ class ClickHouseStore:
             method="POST",
         )
         if self._ssl_context is not None:
-            response = urllib.request.urlopen(
-                request, timeout=10, context=self._ssl_context
-            )  # nosec B310
+            response = urllib.request.urlopen(request, timeout=10, context=self._ssl_context)  # nosec B310
         else:
             response = urllib.request.urlopen(request, timeout=10)  # nosec B310
         with response as result:
