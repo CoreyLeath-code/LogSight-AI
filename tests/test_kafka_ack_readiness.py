@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import sys
 from types import ModuleType
-from typing import Any
 
 import pytest
 
