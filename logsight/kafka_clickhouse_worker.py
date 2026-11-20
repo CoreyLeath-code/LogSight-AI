@@ -109,9 +109,7 @@ async def run_worker() -> None:
     )
     store = ClickHouseStore(base_url=url)
     dlq_producer = (
-        AIOKafkaProducer(
-            bootstrap_servers=bootstrap, acks="all", enable_idempotence=True
-        )
+        AIOKafkaProducer(bootstrap_servers=bootstrap, acks="all", enable_idempotence=True)
         if dlq_topic
         else None
     )
