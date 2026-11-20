@@ -111,6 +111,19 @@ classification policy. Review these limits before handling real log data.
 **Exit evidence:** data-flow diagram, approved data classification, redaction
 tests, retention/deletion test evidence, and secrets/key-management runbook.
 
+### Scoped Redis admission-key hardening (candidate PR)
+
+Redis deduplication now incorporates the same hashed admission scope as
+the per-scope rate-limit key. Previously, equal message fingerprints from
+unrelated services could collide in the shared deduplication namespace.
+Regression tests demonstrate distinct keys for distinct scopes and stable
+keys for repeated events in the same scope.
+
+**Boundary:** callers still provide the scope via the event service field.
+This is **not** authenticated tenant identity, complete tenant authorization,
+or protection against an untrusted client asserting another service name.
+Workload identity and tenant-scoped access controls remain open Phase 1 gates.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
