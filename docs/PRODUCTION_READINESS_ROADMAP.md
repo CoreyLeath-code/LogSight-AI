@@ -120,6 +120,20 @@ classification policy. Review these limits before handling real log data.
 **Exit evidence:** data-flow diagram, approved data classification, redaction
 tests, retention/deletion test evidence, and secrets/key-management runbook.
 
+### Kafka producer delivery contract (candidate PR)
+
+The optional `KafkaStream` adapter now requests broker acknowledgements from
+all in-sync replicas and enables producer idempotence. Client publish waits
+are bounded and acknowledgement timeout raises an explicit exception;
+unit tests verify these settings without claiming a live-broker recovery drill.
+
+**Still missing:** the FastAPI gateway does not yet route accepted events
+through Kafka; TLS/SASL, ACLs, partitioning, retries and downstream ClickHouse
+consumer ownership require explicit deployment design and integration evidence.
+A publish timeout is an indeterminate outcome and is **not** proof of rejection
+by the broker. Producer idempotence alone does not make the end-to-end pipeline
+exactly-once.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
