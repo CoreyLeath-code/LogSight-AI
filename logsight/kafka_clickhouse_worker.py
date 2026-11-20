@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .dead_letter import quarantine_envelope
+from .kafka_security import kafka_security_settings
 from .redaction import redact_log_line
 from .storage import ClickHouseStore
 
@@ -122,10 +123,16 @@ async def run_worker() -> None:
         group_id=group,
         enable_auto_commit=False,
         auto_offset_reset="earliest",
+        **kafka_security_settings(),
     )
     store = ClickHouseStore(base_url=url)
     dlq_producer = (
-        AIOKafkaProducer(bootstrap_servers=bootstrap, acks="all", enable_idempotence=True)
+        AIOKafkaProducer(
+            bootstrap_servers=bootstrap,
+            acks="all",
+            enable_idempotence=True,
+            **kafka_security_settings(),
+        )
         if dlq_topic
         else None
     )

@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — Kafka transport security foundation:** TLS context,
+  SASL_SSL configuration and rejection of plaintext credential transport
+  ([PR #70](https://github.com/CoreyLeath-code/LogSight-AI/pull/70)).
 - [x] **Phase 3 — opt-in recovery-test harness:** replay and injected
   storage/offset failure tests with a disposable infrastructure runbook;
   live execution evidence is still pending
@@ -331,6 +334,20 @@ The runbook and test are authored, not proof that a broker/database
 drill ran successfully. Actual connection, restart, rebalance,
 broker outage and authenticated deployment conditions remain
 unverified and Phase 3 remains open.
+
+### Kafka TLS/SASL client settings (candidate PR)
+
+The API producer, worker consumer and restricted DLQ producer now share
+validation for PLAINTEXT development mode, TLS certificate verification
+(`SSL`), and `SASL_SSL` with PLAIN or SCRAM credentials. SASL over
+unencrypted Kafka is prohibited, and inconsistent credential settings
+fail before establishing a broker connection. Unit tests exercise validation
+and the resulting verified TLS context.
+
+**Not complete:** the local Compose broker remains plaintext; no broker
+ACL, secret-store injection, broker identity provisioning, authenticated
+live recovery test, mTLS client certificate policy, credential rotation,
+or secured ClickHouse endpoint is certified. Phase 3 exit remains open.
 
 ## Phase 3 — Durable ingestion and storage
 
