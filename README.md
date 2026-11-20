@@ -460,6 +460,21 @@ been recorded here. Phase 3 remains incomplete until the drill is run
 against approved infrastructure and the remaining durability, security,
 rebalance, and replay requirements are verified.
 
+### Kafka TLS and SASL configuration foundation
+
+Experimental Kafka API producers, the ClickHouse sink consumer, and the
+restricted dead-letter producer now share validated security settings.
+Local development still defaults to `PLAINTEXT`, but TLS-enabled
+`SSL` and authenticated `SASL_SSL` modes support a verified CA context.
+`SASL_PLAINTEXT` and credential settings on unencrypted connections are
+rejected. See [`.env.example`](.env.example) for environment variables.
+
+**Still required for production:** secret-store injection, broker-side ACLs,
+certificate/credential rotation, tenant isolation, secure ClickHouse
+credentials/transport, and successful tests with authenticated infrastructure.
+This feature adds configuration support; it does not secure the default
+local Compose stack or complete Phase 3.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
