@@ -149,8 +149,8 @@ def create_app() -> Any:
 
     @app.middleware("http")
     async def require_api_token(request: Request, call_next: Any) -> Response:
-        # /health is intentionally unauthenticated for liveness probes.
-        if auth_mode == "token" and request.url.path != "/health":
+        # Health and readiness probes must not require application bearer tokens.
+        if auth_mode == "token" and request.url.path not in {"/health", "/ready"}:
             authorization = request.headers.get("authorization", "")
             scheme, separator, candidate = authorization.partition(" ")
             if (
