@@ -445,6 +445,21 @@ different database nodes, or with new IDs can still create duplicates.
 Do not enable without verifying the table engine, ClickHouse version,
 deployment topology, and live recovery behavior. No exactly-once claim.
 
+### Disposable Kafka and ClickHouse recovery drill
+
+The repository includes an **opt-in** live dependency test covering a
+synthetic Kafka event, a simulated ClickHouse write failure, offset
+non-acknowledgement, recovery, and replay of the same broker record.
+A separate unit test covers the opposite ambiguity: a successful
+storage write followed by a failed Kafka offset commit.
+
+See [the disposable recovery drill runbook](docs/KAFKA_CLICKHOUSE_RECOVERY_DRILL.md)
+for service setup, commands, safe test isolation, and evidence collection.
+The live test is **skipped in normal CI** and no live test result has
+been recorded here. Phase 3 remains incomplete until the drill is run
+against approved infrastructure and the remaining durability, security,
+rebalance, and replay requirements are verified.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
