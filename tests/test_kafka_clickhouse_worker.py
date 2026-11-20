@@ -21,6 +21,7 @@ def sample_event() -> dict[str, Any]:
         "message": "ERROR password=secret123 user=user@example.org",
         "raw": "ERROR password=secret123 user=user@example.org",
         "fingerprint": "abc123",
+        "event_id": "b0b0c11b-0fc2-49ef-b8ee-a017a334da12",
         "trace_id": None,
         "span_id": None,
         "template": "ERROR <*>",
@@ -43,6 +44,7 @@ def test_schema_matches_clickhouse_insert_contract_and_redacts() -> None:
         "message",
         "raw",
         "fingerprint",
+        "event_id",
         "trace_id",
         "span_id",
         "template",
@@ -53,6 +55,7 @@ def test_schema_matches_clickhouse_insert_contract_and_redacts() -> None:
     assert "user@example.org" not in row["message"]
     assert "hidden" not in row["attributes"]
     assert row["trace_id"] is None
+    assert row["event_id"] == "b0b0c11b-0fc2-49ef-b8ee-a017a334da12"
 
 
 @pytest.mark.parametrize(
@@ -66,6 +69,8 @@ def test_schema_matches_clickhouse_insert_contract_and_redacts() -> None:
         encoded({**sample_event(), "timestamp": "2026-11-19T13:14:15"}),
         encoded({**sample_event(), "attributes": {"size": 123}}),
         encoded({**sample_event(), "raw": None}),
+        encoded({key: value for key, value in sample_event().items() if key != "event_id"}),
+        encoded({**sample_event(), "event_id": "not-a-uuid"}),
     ],
 )
 def test_invalid_envelopes_fail_closed(payload: bytes) -> None:
@@ -124,3 +129,10 @@ def test_poison_record_does_not_advance_offset() -> None:
         assert consumer.committed is False
 
     asyncio.run(exercise())
+
+
+def test_event_id_is_stable_for_replayed_broker_message() -> None:
+    payload = encoded()
+    first = decode_event(payload)
+    replayed = decode_event(payload)
+    assert first["event_id"] == replayed["event_id"]
