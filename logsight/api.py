@@ -175,9 +175,7 @@ def create_app() -> Any:
         # Keep this lightweight; no Kafka network polling per HTTP probe.
         # The producer state only reflects successful local initialization.
         stream = getattr(request.app.state, "kafka_stream", None)
-        if kafka_stream is not None and (
-            stream is None or not stream.is_ready()
-        ):
+        if kafka_stream is not None and (stream is None or not stream.is_ready()):
             raise HTTPException(status_code=503, detail="Kafka producer not ready")
         return {"status": "ready", "service": "logsight-api"}
 
