@@ -12,8 +12,7 @@ from typing import Any
 import pytest
 
 from logsight.dead_letter import quarantine_envelope
-from logsight.kafka_clickhouse_worker import run_worker
-from logsight.kafka_clickhouse_worker import InvalidEventEnvelope, decode_event
+from logsight.kafka_clickhouse_worker import InvalidEventEnvelope, decode_event, run_worker
 
 
 def test_quarantine_preserves_source_and_bytes() -> None:
