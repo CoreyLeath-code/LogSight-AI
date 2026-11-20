@@ -96,7 +96,6 @@ async def run_worker() -> None:
         group_id=group,
         enable_auto_commit=False,
         auto_offset_reset="earliest",
-        max_poll_records=1,
     )
     store = ClickHouseStore(base_url=url)
     await consumer.start()
