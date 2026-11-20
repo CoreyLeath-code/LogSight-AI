@@ -527,13 +527,14 @@ Set `LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS` to 5–300 seconds
 for the configured Kafka topic using the existing authenticated producer
 connection. The request is bounded by a five-second maximum, and unavailable
 or empty topic metadata causes `/ready` to return HTTP 503. Successful
-metadata refresh can restore readiness during idle periods without requiring
-an HTTP write. The monitor stops with the producer lifecycle.
+metadata refresh can restore the metadata-health signal during idle periods;
+readiness also requires that no subsequent publish failure remains unresolved.
+Only a confirmed successful publish can clear a failed-publish signal. The monitor stops with the producer lifecycle.
 
 **Boundary:** topic metadata reachability is not the same as a successful
 write acknowledgement, in-sync-replica durability, healthy downstream
-ClickHouse storage or a complete HA probe. A metadata success may restore
-readiness after a publish failure despite continuing write failures.
+ClickHouse storage or a complete HA probe. A metadata success cannot clear a failed-publish readiness signal, and
+successful writes cannot clear failed metadata health when monitoring is enabled.
 Use this only in controlled staging until broker ACLs, leader changes,
 restarts, alert thresholds and outage behavior are verified in live drills.
 Phase 4 remains open.
