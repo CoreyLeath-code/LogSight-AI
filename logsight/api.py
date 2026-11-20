@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import os
 import secrets
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from collections import deque
 from dataclasses import asdict
 from typing import Any
@@ -16,6 +18,7 @@ from .parser import parse_line
 from .redaction import redact_log_line
 from .redis_control import RedisAdmissionController, build_redis_controller
 from .request_limits import IngestionBodyLimit
+from .streaming import KafkaStream
 from .templates import TemplateParser, build_template_parser
 
 try:
@@ -50,7 +53,9 @@ _admission_controller: RedisAdmissionController | None = build_redis_controller(
 _inference_dispatcher: CeleryInferenceDispatcher | None = build_celery_dispatcher()
 
 
-async def _process(item: LogPayload) -> tuple[EnrichedLog, Any, str | None]:
+async def _process(
+    item: LogPayload, *, kafka_stream: KafkaStream | None = None
+) -> tuple[EnrichedLog, Any, str | None]:
     with span("logsight.ingest", service=item.service, source=item.source) as _:
         event = correlate_with_active_span(
             enrich(
@@ -66,6 +71,16 @@ async def _process(item: LogPayload) -> tuple[EnrichedLog, Any, str | None]:
                 status_code = 409 if decision.reason == "duplicate" else 429
                 raise HTTPException(status_code=status_code, detail=decision.reason)
         event.template = _template_parser.parse(event.message)
+        if kafka_stream is not None:
+            try:
+                await kafka_stream.publish(event)
+            except Exception as exc:
+                # A timeout can mean the broker accepted the event; retries
+                # require downstream deduplication. Never expose raw logs.
+                raise HTTPException(
+                    status_code=503,
+                    detail="Broker acknowledgement not confirmed; retry may duplicate event",
+                ) from exc
         _recent.append(event)
         result = score_event(event, list(_recent))
         _metrics["logsight_ingested_total"] += 1
@@ -99,7 +114,34 @@ def create_app() -> Any:
     if not 1 <= max_body_bytes <= 16 * 1024 * 1024:
         raise RuntimeError("LOGSIGHT_API_MAX_BODY_BYTES must be between 1 and 16777216")
 
-    app = FastAPI(title="LogSight-AI Enterprise API", version="0.2.0")
+    kafka_mode = os.getenv("LOGSIGHT_API_KAFKA_ENABLED", "false").strip().lower()
+    if kafka_mode not in {"true", "false"}:
+        raise RuntimeError("LOGSIGHT_API_KAFKA_ENABLED must be true or false")
+    kafka_stream = (
+        KafkaStream(
+            os.getenv("KAFKA_BOOTSTRAP_SERVERS", ""),
+            os.getenv("LOGSIGHT_KAFKA_TOPIC", ""),
+        )
+        if kafka_mode == "true"
+        else None
+    )
+    # Redis dedup currently commits before a broker ack. Combining these modes
+    # could reject retries after a failed or ambiguous broker send.
+    if kafka_stream is not None and _admission_controller is not None:
+        raise RuntimeError("Disable Redis admission while API Kafka mode is experimental")
+
+    @asynccontextmanager
+    async def lifespan(application: Any) -> AsyncIterator[None]:
+        application.state.kafka_stream = kafka_stream
+        if kafka_stream is not None:
+            await kafka_stream.start()
+        try:
+            yield
+        finally:
+            if kafka_stream is not None:
+                await kafka_stream.stop()
+
+    app = FastAPI(title="LogSight-AI Enterprise API", version="0.2.0", lifespan=lifespan)
     app.add_middleware(IngestionBodyLimit, max_body_bytes=max_body_bytes)
 
     @app.middleware("http")
@@ -131,18 +173,22 @@ def create_app() -> Any:
         return Response(content=body, media_type="text/plain; version=0.0.4")
 
     @app.post("/v1/logs")
-    async def ingest(payload: LogPayload) -> dict[str, Any]:
-        event, result, task_id = await _process(payload)
+    async def ingest(payload: LogPayload, request: Request) -> dict[str, Any]:
+        event, result, task_id = await _process(
+            payload, kafka_stream=request.app.state.kafka_stream
+        )
         response: dict[str, Any] = {"event": event.to_dict(), "anomaly": asdict(result)}
         if task_id is not None:
             response["inference_task_id"] = task_id
         return response
 
     @app.post("/v1/logs/batch")
-    async def ingest_batch(payload: BatchPayload) -> dict[str, Any]:
+    async def ingest_batch(payload: BatchPayload, request: Request) -> dict[str, Any]:
         results = []
         for item in payload.logs:
-            event, result, task_id = await _process(item)
+            event, result, task_id = await _process(
+                item, kafka_stream=request.app.state.kafka_stream
+            )
             response: dict[str, Any] = {"event": event.to_dict(), "anomaly": asdict(result)}
             if task_id is not None:
                 response["inference_task_id"] = task_id
