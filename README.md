@@ -449,6 +449,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** partition-scoped Kafka offset commits after
+  acknowledged ClickHouse writes or DLQ publishes; cross-partition failure tests
+  ([PR #67](https://github.com/CoreyLeath-code/LogSight-AI/pull/67)).
 - [x] **Phase 3 foundation:** metadata-only offline verification of restricted
   dead-letter envelopes, including checksum and corruption checks
   ([PR #66](https://github.com/CoreyLeath-code/LogSight-AI/pull/66)).
