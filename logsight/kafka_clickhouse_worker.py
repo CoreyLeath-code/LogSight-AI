@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from .dead_letter import quarantine_envelope
 from .redaction import redact_log_line
 from .storage import ClickHouseStore
 
@@ -21,10 +22,14 @@ _FIELDS = ("level", "service", "source", "host", "message", "raw", "fingerprint"
 _OPTIONAL_FIELDS = ("trace_id", "span_id", "template")
 
 
+class InvalidEventEnvelope(ValueError):
+    """Payload validation failure, never a storage or transport exception."""
+
+
 def decode_event(payload: bytes) -> dict[str, Any]:
     """Validate a bounded event envelope and map to the existing table contract."""
     if len(payload) > 1024 * 1024:
-        raise ValueError("Kafka event exceeds the 1 MiB worker limit")
+        raise InvalidEventEnvelope("Kafka event exceeds the 1 MiB worker limit")
     try:
         value = json.loads(payload)
         if not isinstance(value, dict):
@@ -53,8 +58,8 @@ def decode_event(payload: bytes) -> dict[str, Any]:
         timestamp = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
         if timestamp.tzinfo is None:
             raise ValueError("Kafka event timestamp requires timezone")
-    except (KeyError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ValueError("Invalid Kafka event schema") from exc
+    except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+        raise InvalidEventEnvelope("Invalid Kafka event schema") from exc
 
     normalized: dict[str, Any] = {key: redact_log_line(value[key]) for key in _FIELDS}
     normalized["event_id"] = event_id
@@ -87,8 +92,11 @@ async def run_worker() -> None:
     if not all((bootstrap, topic, group, url)):
         raise RuntimeError("Kafka bootstrap, topic, consumer group and ClickHouse URL required")
 
+    dlq_topic = os.environ.get("LOGSIGHT_KAFKA_DLQ_TOPIC", "").strip()
+    if dlq_topic and dlq_topic == topic:
+        raise RuntimeError("DLQ topic must differ from the source topic")
     try:
-        from aiokafka import AIOKafkaConsumer
+        from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
     except ImportError as exc:
         raise RuntimeError("Install the kafka extra to run the ClickHouse sink") from exc
 
@@ -100,10 +108,37 @@ async def run_worker() -> None:
         auto_offset_reset="earliest",
     )
     store = ClickHouseStore(base_url=url)
+    dlq_producer = (
+        AIOKafkaProducer(bootstrap_servers=bootstrap, acks="all", enable_idempotence=True)
+        if dlq_topic
+        else None
+    )
     await consumer.start()
     try:
-        async for message in consumer:
-            await persist_message(message.value, consumer, store)
+        if dlq_producer is not None:
+            await dlq_producer.start()
+        try:
+            async for message in consumer:
+                try:
+                    await persist_message(message.value, consumer, store)
+                except InvalidEventEnvelope:
+                    # Only malformed envelopes are quarantined. A ClickHouse
+                    # outage must stop processing WITHOUT committing an offset.
+                    if dlq_producer is None:
+                        raise
+                    record = quarantine_envelope(
+                        message.value,
+                        topic=message.topic,
+                        partition=message.partition,
+                        offset=message.offset,
+                    )
+                    await dlq_producer.send_and_wait(dlq_topic, record)
+                    # A failed or ambiguous DLQ publish leaves the source
+                    # offset uncommitted. Replays may duplicate DLQ entries.
+                    await consumer.commit()
+        finally:
+            if dlq_producer is not None:
+                await dlq_producer.stop()
     finally:
         await consumer.stop()
 

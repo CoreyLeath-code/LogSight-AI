@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — malformed-event quarantine foundation:** optional restricted
+  Kafka DLQ with source-offset commit gated on DLQ acknowledgement
+  ([PR #65](https://github.com/CoreyLeath-code/LogSight-AI/pull/65)).
 - [x] **Phase 3 — client retry identity foundation:** validated optional
   UUIDv4 header carried through the experimental event pipeline; duplicate
   writes remain possible ([PR #64](https://github.com/CoreyLeath-code/LogSight-AI/pull/64)).
@@ -241,6 +244,22 @@ ClickHouse row. It does not bind a key to a tenant, immutable payload,
 retention period, response cache, or transactional batch. Durable deduplication
 and tenant-scoped authorization must be implemented and reviewed before
 calling this an idempotency mechanism.
+
+### Experimental malformed-record quarantine (candidate PR)
+
+An optional `LOGSIGHT_KAFKA_DLQ_TOPIC` routes invalid message envelopes to a
+separate Kafka topic; it commits the source offset **only after** the DLQ publish
+is acknowledged by the broker. Unconfigured/failed DLQ delivery blocks offset
+progress. Storage failures remain fatal and uncommitted rather than being
+misclassified as poison records. Tests cover quarantine acknowledgement order,
+missing DLQ acknowledgement, and validation errors.
+
+**Remaining production gates:** DLQ carries original bytes and must have
+restricted ACLs, authenticated/encrypted transport, retention/deletion, audited
+access, and a reviewed sanitization process. It currently has no authorized
+replay CLI, deduplication guarantee, poison-event repair protocol, retry budget,
+or live-broker recovery proof. Never enable this for untrusted workloads without
+an approved data governance design.
 
 ## Phase 3 — Durable ingestion and storage
 
