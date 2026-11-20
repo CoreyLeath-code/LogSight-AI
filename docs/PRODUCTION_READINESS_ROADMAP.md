@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 — optional Kafka idle connectivity foundation:** bounded
+  metadata probes, failure/recovery tests and shutdown cleanup; not a write SLA
+  ([PR #74](https://github.com/CoreyLeath-code/LogSight-AI/pull/74)).
 - [x] **Phase 4 — local producer readiness foundation:** independent
   liveness and Kafka producer lifecycle readiness, Helm probe and tests
   ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
