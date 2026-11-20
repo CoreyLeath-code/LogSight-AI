@@ -70,7 +70,7 @@ def test_live_metadata_probe_fails_closed_and_recovers(
         assert stream._monitor_task is None
         assert not stream.is_ready()
 
-    asyncio.run(scenario())
+    asyncio.run(asyncio.wait_for(scenario(), timeout=5))
 
 
 def test_bounded_probe_timeout_and_empty_partition_response(
@@ -104,7 +104,7 @@ def test_bounded_probe_timeout_and_empty_partition_response(
         await stream._probe_metadata()
         assert not stream.is_ready()
 
-    asyncio.run(scenario())
+    asyncio.run(asyncio.wait_for(scenario(), timeout=5))
 
 
 def test_periodic_monitor_invokes_probe_and_cancels_on_shutdown(
@@ -148,4 +148,4 @@ def test_periodic_monitor_invokes_probe_and_cancels_on_shutdown(
         await asyncio.sleep(0.005)
         assert producer.client.calls == before
 
-    asyncio.run(scenario())
+    asyncio.run(asyncio.wait_for(scenario(), timeout=5))
