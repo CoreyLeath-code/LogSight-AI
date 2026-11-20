@@ -14,8 +14,8 @@ from .enterprise import EnrichedLog, enrich, score_event
 from .observability import configure_tracing, correlate_with_active_span, span
 from .parser import parse_line
 from .redaction import redact_log_line
-from .request_limits import IngestionBodyLimit
 from .redis_control import RedisAdmissionController, build_redis_controller
+from .request_limits import IngestionBodyLimit
 from .templates import TemplateParser, build_template_parser
 
 try:
