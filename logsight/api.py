@@ -170,6 +170,17 @@ def create_app() -> Any:
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "logsight-api"}
 
+    @app.get("/ready")
+    async def ready(request: Request) -> dict[str, str]:
+        # Keep this lightweight; no Kafka network polling per HTTP probe.
+        # The producer state only reflects successful local initialization.
+        stream = getattr(request.app.state, "kafka_stream", None)
+        if kafka_stream is not None and (
+            stream is None or not stream.is_ready()
+        ):
+            raise HTTPException(status_code=503, detail="Kafka producer not ready")
+        return {"status": "ready", "service": "logsight-api"}
+
     @app.get("/metrics")
     async def metrics() -> Response:
         body = "\n".join(f"{name} {value}" for name, value in _metrics.items()) + "\n"
