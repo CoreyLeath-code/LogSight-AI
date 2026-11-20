@@ -114,7 +114,7 @@ def test_storage_failure_does_not_advance_consumer_offset(monkeypatch: pytest.Mo
         assert store.events == []
 
         store.fail = False
-        await persist_message(encoded(), consumer, store)  # type: ignore[arg-type]
+        await persist_message(message, consumer, store)  # type: ignore[arg-type]
         assert consumer.commits == 1
         assert len(store.events) == 1
 
