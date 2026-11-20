@@ -41,12 +41,10 @@ def test_authenticated_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
             assert response.headers["www-authenticate"] == "Bearer"
             assert response.headers["cache-control"] == "no-store"
             assert client.get(path, headers={"Authorization": "Basic abc"}).status_code == 401
-            assert client.get(
-                path, headers={"Authorization": "Bearer " + "b" * 48}
-            ).status_code == 401
-            assert client.get(
-                path, headers={"Authorization": f"Bearer {token}"}
-            ).status_code == 200
+            assert (
+                client.get(path, headers={"Authorization": "Bearer " + "b" * 48}).status_code == 401
+            )
+            assert client.get(path, headers={"Authorization": f"Bearer {token}"}).status_code == 200
 
         payload = {"line": "INFO demonstration", "service": "api"}
         assert client.post("/v1/logs", json=payload).status_code == 401
