@@ -76,11 +76,27 @@ def decode_event(payload: bytes) -> dict[str, Any]:
     return normalized
 
 
-async def persist_message(payload: bytes, consumer: Any, store: ClickHouseStore) -> None:
-    """Commit the consumer offset only after a successful storage response."""
-    event = decode_event(payload)
+async def commit_source_offset(consumer: Any, message: Any) -> None:
+    """Acknowledge exactly one processed source partition at offset + 1."""
+    from aiokafka import TopicPartition
+
+    if (
+        not isinstance(message.topic, str)
+        or not message.topic
+        or type(message.partition) is not int
+        or message.partition < 0
+        or type(message.offset) is not int
+        or message.offset < 0
+    ):
+        raise ValueError("Invalid Kafka message coordinates")
+    await consumer.commit({TopicPartition(message.topic, message.partition): message.offset + 1})
+
+
+async def persist_message(message: Any, consumer: Any, store: ClickHouseStore) -> None:
+    """Acknowledge only this partition after the storage insert succeeds."""
+    event = decode_event(message.value)
     await asyncio.to_thread(store.insert_events, [event])
-    await consumer.commit()
+    await commit_source_offset(consumer, message)
 
 
 async def run_worker() -> None:
@@ -120,7 +136,7 @@ async def run_worker() -> None:
         try:
             async for message in consumer:
                 try:
-                    await persist_message(message.value, consumer, store)
+                    await persist_message(message, consumer, store)
                 except InvalidEventEnvelope:
                     # Only malformed envelopes are quarantined. A ClickHouse
                     # outage must stop processing WITHOUT committing an offset.
@@ -135,7 +151,7 @@ async def run_worker() -> None:
                     await dlq_producer.send_and_wait(dlq_topic, record)
                     # A failed or ambiguous DLQ publish leaves the source
                     # offset uncommitted. Replays may duplicate DLQ entries.
-                    await consumer.commit()
+                    await commit_source_offset(consumer, message)
         finally:
             if dlq_producer is not None:
                 await dlq_producer.stop()
