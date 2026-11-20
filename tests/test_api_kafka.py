@@ -60,7 +60,9 @@ def test_api_rejects_invalid_kafka_configuration(monkeypatch: pytest.MonkeyPatch
         api.create_app()
 
 
-def test_api_rejects_unresolved_redis_dedup_ordering(kafka_config: None, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_api_rejects_unresolved_redis_dedup_ordering(
+    kafka_config: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(api, "_admission_controller", object())
     with pytest.raises(RuntimeError, match="Redis admission"):
         api.create_app()
