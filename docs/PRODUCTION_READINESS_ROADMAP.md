@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — stable event identity:** UUID propagation through Kafka,
+  ClickHouse schema migration and replay ID tests
+  ([PR #63](https://github.com/CoreyLeath-code/LogSight-AI/pull/63)).
 - [x] **Phase 3 — experimental ClickHouse sink:** offset commit after successful
   insert, schema tests and storage-failure handling
   ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
