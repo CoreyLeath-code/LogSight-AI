@@ -310,6 +310,24 @@ event_id uniqueness constraint or cross-cluster transaction. Live
 integration testing and restart/rebalance fault injection are pending;
 multi-tenant identity, retention and replay control are unresolved.
 
+### Opt-in real-dependency recovery drill harness (candidate PR)
+
+An explicit, opt-in integration test exercises a synthetic Kafka event
+against a real Kafka broker and ClickHouse database. It injects a
+storage failure before offset commit, retries the same record, then
+replays it after successful persistence and verifies the expected row
+count while the bounded ClickHouse dedup window applies. A unit test
+simulates ClickHouse write success followed by Kafka offset-commit
+failure and confirms replay preserves the event identifier.
+[Runbook](KAFKA_CLICKHOUSE_RECOVERY_DRILL.md) documents isolated
+configuration and evidence collection.
+
+**Evidence gap:** the live integration test is skipped by ordinary CI.
+The runbook and test are authored, not proof that a broker/database
+drill ran successfully. Actual connection, restart, rebalance,
+broker outage and authenticated deployment conditions remain
+unverified and Phase 3 remains open.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
