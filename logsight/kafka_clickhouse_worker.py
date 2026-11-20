@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from .dead_letter import quarantine_envelope
 from .redaction import redact_log_line
 from .storage import ClickHouseStore
 
@@ -87,8 +88,11 @@ async def run_worker() -> None:
     if not all((bootstrap, topic, group, url)):
         raise RuntimeError("Kafka bootstrap, topic, consumer group and ClickHouse URL required")
 
+    dlq_topic = os.environ.get("LOGSIGHT_KAFKA_DLQ_TOPIC", "").strip()
+    if dlq_topic and dlq_topic == topic:
+        raise RuntimeError("DLQ topic must differ from the source topic")
     try:
-        from aiokafka import AIOKafkaConsumer
+        from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
     except ImportError as exc:
         raise RuntimeError("Install the kafka extra to run the ClickHouse sink") from exc
 
@@ -100,10 +104,39 @@ async def run_worker() -> None:
         auto_offset_reset="earliest",
     )
     store = ClickHouseStore(base_url=url)
+    dlq_producer = (
+        AIOKafkaProducer(
+            bootstrap_servers=bootstrap, acks="all", enable_idempotence=True
+        )
+        if dlq_topic
+        else None
+    )
     await consumer.start()
     try:
-        async for message in consumer:
-            await persist_message(message.value, consumer, store)
+        if dlq_producer is not None:
+            await dlq_producer.start()
+        try:
+            async for message in consumer:
+                try:
+                    await persist_message(message.value, consumer, store)
+                except ValueError:
+                    # Only malformed envelopes are quarantined. A ClickHouse
+                    # outage must stop processing WITHOUT committing an offset.
+                    if dlq_producer is None:
+                        raise
+                    record = quarantine_envelope(
+                        message.value,
+                        topic=message.topic,
+                        partition=message.partition,
+                        offset=message.offset,
+                    )
+                    await dlq_producer.send_and_wait(dlq_topic, record)
+                    # A failed or ambiguous DLQ publish leaves the source
+                    # offset uncommitted. Replays may duplicate DLQ entries.
+                    await consumer.commit()
+        finally:
+            if dlq_producer is not None:
+                await dlq_producer.stop()
     finally:
         await consumer.stop()
 
