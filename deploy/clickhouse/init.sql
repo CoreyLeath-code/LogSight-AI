@@ -19,4 +19,5 @@ CREATE TABLE IF NOT EXISTS logsight.events
 ENGINE = MergeTree
 PARTITION BY toDate(timestamp)
 ORDER BY (service, timestamp, fingerprint)
-TTL toDateTime(timestamp) + INTERVAL 30 DAY;
+TTL toDateTime(timestamp) + INTERVAL 30 DAY
+SETTINGS non_replicated_deduplication_window = 10000;

@@ -430,6 +430,21 @@ This improves at-least-once failure handling but does **not** implement
 ClickHouse row-level deduplication, Kafka transactions, replay authorization,
 or exactly-once delivery. Phase 3 production approval remains open.
 
+### Experimental bounded ClickHouse retry deduplication
+
+Each single-event Kafka-to-ClickHouse insert now supplies the normalized
+`event_id` UUID as `insert_deduplication_token`, with
+`insert_deduplicate=1`. New non-replicated MergeTree tables retain a
+bounded deduplication history of 10,000 inserted blocks. Existing tables
+require a reviewed migration:
+[`002_bounded_insert_dedup.sql`](deploy/clickhouse/migrations/002_bounded_insert_dedup.sql).
+
+This reduces duplicate writes from immediate replays of the **same ID**.
+It is not a unique constraint: repeats outside the window, across
+different database nodes, or with new IDs can still create duplicates.
+Do not enable without verifying the table engine, ClickHouse version,
+deployment topology, and live recovery behavior. No exactly-once claim.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -449,6 +464,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** bounded ClickHouse retry deduplication using
+  stable event IDs and non-replicated MergeTree insert history
+  ([PR #68](https://github.com/CoreyLeath-code/LogSight-AI/pull/68)).
 - [x] **Phase 3 foundation:** partition-scoped Kafka offset commits after
   acknowledged ClickHouse writes or DLQ publishes; cross-partition failure tests
   ([PR #67](https://github.com/CoreyLeath-code/LogSight-AI/pull/67)).

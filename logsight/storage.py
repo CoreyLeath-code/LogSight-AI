@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
+import uuid
 from typing import Any, cast
 
 
@@ -33,6 +34,29 @@ class ClickHouseStore:
             return
         payload = "\n".join(json.dumps(event, separators=(",", ":")) for event in events)
         self.execute("INSERT INTO logsight.events FORMAT JSONEachRow", payload)
+
+    def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
+        """Insert a single event with a deterministic bounded block-dedup token.
+
+        Requires a configured MergeTree deduplication window. This is not a
+        unique constraint and does not guarantee exactly-once delivery.
+        """
+        raw_id = event.get("event_id")
+        if not isinstance(raw_id, str):
+            raise ValueError("event_id must be a canonical UUID")
+        try:
+            event_id = str(uuid.UUID(raw_id))
+        except ValueError as exc:
+            raise ValueError("event_id must be a canonical UUID") from exc
+        if event_id != raw_id:
+            raise ValueError("event_id must be a canonical UUID")
+        payload = json.dumps(event, separators=(",", ":"))
+        self.execute(
+            "INSERT INTO logsight.events "
+            "SETTINGS insert_deduplicate=1, "
+            f"insert_deduplication_token='{event_id}' FORMAT JSONEachRow",
+            payload,
+        )
 
 
 class QdrantStore:
