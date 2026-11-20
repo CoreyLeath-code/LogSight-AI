@@ -261,6 +261,19 @@ replay CLI, deduplication guarantee, poison-event repair protocol, retry budget,
 or live-broker recovery proof. Never enable this for untrusted workloads without
 an approved data governance design.
 
+### Offline DLQ envelope verification (candidate PR)
+
+An offline operator utility validates existing restricted dead-letter
+envelopes, original-byte checksum, source coordinates, and input size without
+printing or republishing the payload. Tests reject mutated checksums,
+encodings, versions and coordinates, and check that metadata-only reports do
+not expose representative secrets. This is an incremental prerequisite to a
+controlled replay runbook.
+
+**Not completed:** no automatic replay, tenant authorization, repair approval,
+data-retention enforcement, payload sanitization guarantee, durable deduplication,
+live-broker integration, or operational recovery drill is implemented.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
