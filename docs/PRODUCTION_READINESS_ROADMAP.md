@@ -385,6 +385,19 @@ authenticated broker/database recovery test.
 dependencies, durable-delivery dashboards, documented recovery procedure, and a
 successful replay drill.
 
+### API liveness/readiness separation (candidate PR)
+
+The API exposes `/health` for independent process liveness and `/ready`
+for local Kafka-producer lifecycle readiness when broker-acknowledged
+ingestion is enabled. The Helm chart routes the readiness probe to
+`/ready`. Tests check healthy/degraded readiness and that application
+bearer tokens are still required for operational endpoints.
+
+**Limit:** this is lifecycle-aware, not a continuous external dependency
+health check. Kafka broker connectivity after startup, ClickHouse health,
+Redis, inference workers, multi-pod probe behavior, and staging alerts
+must still be tested. No Phase 4 production exit is claimed.
+
 ## Phase 4 — Availability, resilience, and observability
 
 - [ ] Implement dependency-aware readiness and startup probes; distinguish
