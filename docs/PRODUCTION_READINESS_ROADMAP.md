@@ -62,6 +62,15 @@ secret from a deployment secret manager, transmit it only over TLS, and set
 publicly reachable deployment**. `/health` remains a public liveness probe;
 metrics and recent-event endpoints are guarded in token mode.
 
+### Additional API request admission control (candidate PR)
+
+A bounded ASGI request-body guard now checks declared and streamed payload
+sizes before validation, parsing, or inference for ingestion routes. The
+configured cap defaults to 1 MiB and tests cover oversized JSON, streamed
+requests, and successful small requests. This is partial Phase 1 evidence;
+concurrency/timeouts, tenant-aware quotas, identity and authorization,
+external ingress policy, and deployment load evidence remain outstanding.
+
 ## Phase 1 — API trust boundary
 
 - [ ] Require workload identity at the ingress boundary (for example OIDC,
