@@ -387,6 +387,23 @@ service does not enforce key-to-payload consistency, tenant ownership,
 authorization, a duplicate response cache, or atomic batch acceptance.
 Only use this for controlled experiments until proper deduplication exists.
 
+### Experimental poison-record dead-letter topic
+
+The Kafka-to-ClickHouse worker can optionally publish malformed event
+envelopes to a separate topic using `LOGSIGHT_KAFKA_DLQ_TOPIC`. It publishes
+an envelope with broker coordinates, checksum, and base64-encoded original
+bytes, **then** commits the source offset only after the DLQ broker acknowledges
+it. Without a configured DLQ, invalid records still stop the worker. ClickHouse
+storage failures are **not** quarantined or acknowledged.
+
+**Data-protection warning:** the DLQ contains the original, potentially
+sensitive bytes, including content that failed redaction. Restrict access,
+encrypt transport and storage, set short retention, and require an approved
+operator-controlled replay and deletion process before use. A failed DLQ
+acknowledgement keeps the source record uncommitted; a source-offset commit
+failure can create duplicate quarantines. This is not exactly-once processing
+or a production-ready replay solution.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
