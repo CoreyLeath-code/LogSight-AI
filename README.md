@@ -418,6 +418,18 @@ re-validating privacy controls, enforcing tenant authorization, retaining an
 audit trail, deduplicating replays, and verifying broker recovery are still
 required before any production replay.
 
+### Explicit Kafka consumer offset discipline
+
+The experimental ClickHouse worker now commits only the **source topic and
+partition** of a successfully persisted event, using `offset + 1` as Kafka's
+next-consume position. The malformed-event DLQ path follows the same rule
+after broker acknowledgement. Tests cover separate partitions, storage failure,
+and dead-letter failures without advancing unrelated offsets.
+
+This improves at-least-once failure handling but does **not** implement
+ClickHouse row-level deduplication, Kafka transactions, replay authorization,
+or exactly-once delivery. Phase 3 production approval remains open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
