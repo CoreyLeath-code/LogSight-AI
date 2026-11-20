@@ -372,6 +372,21 @@ an already-written message, the worker can insert it again with the **same**
 idempotency contract. Do not count this as replay safety, exactly-once
 delivery, or phase-level production readiness.
 
+### Explicit HTTP retry identity (Phase 3 foundation)
+
+For a **single-event** `POST /v1/logs` request, callers may supply
+`Idempotency-Key: <canonical UUIDv4>`. The API validates the header and
+propagates that UUID as the event's `event_id` into Kafka and ClickHouse.
+Repeating a request with the same key preserves the ID even if the first
+broker acknowledgement was ambiguous. Omitted keys continue receiving fresh
+random UUIDs. Batch ingestion does not accept a shared retry key.
+
+**This is identity propagation, not idempotent processing.** Every retry can
+still publish another Kafka record and insert another ClickHouse row. The
+service does not enforce key-to-payload consistency, tenant ownership,
+authorization, a duplicate response cache, or atomic batch acceptance.
+Only use this for controlled experiments until proper deduplication exists.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
