@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
+from collections import namedtuple
+from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
@@ -78,11 +81,17 @@ def test_invalid_envelopes_fail_closed(payload: bytes) -> None:
         decode_event(payload)
 
 
-def test_storage_failure_does_not_advance_consumer_offset() -> None:
+def test_storage_failure_does_not_advance_consumer_offset(monkeypatch: pytest.MonkeyPatch) -> None:
+    tp = namedtuple("TopicPartition", ["topic", "partition"])
+    module = ModuleType("aiokafka")
+    module.TopicPartition = tp  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
+
     class Consumer:
         commits = 0
 
-        async def commit(self) -> None:
+        async def commit(self, offsets: Any) -> None:
+            assert offsets == {tp("logs", 2): 42}
             self.commits += 1
 
     class Store:
@@ -97,14 +106,15 @@ def test_storage_failure_does_not_advance_consumer_offset() -> None:
 
     async def exercise() -> None:
         consumer = Consumer()
+        message = SimpleNamespace(value=encoded(), topic="logs", partition=2, offset=41)
         store = Store(fail=True)
         with pytest.raises(ConnectionError):
-            await persist_message(encoded(), consumer, store)  # type: ignore[arg-type]
+            await persist_message(message, consumer, store)  # type: ignore[arg-type]
         assert consumer.commits == 0
         assert store.events == []
 
         store.fail = False
-        await persist_message(encoded(), consumer, store)  # type: ignore[arg-type]
+        await persist_message(message, consumer, store)  # type: ignore[arg-type]
         assert consumer.commits == 1
         assert len(store.events) == 1
 
@@ -115,7 +125,7 @@ def test_poison_record_does_not_advance_offset() -> None:
     class Consumer:
         committed = False
 
-        async def commit(self) -> None:
+        async def commit(self, offsets: Any) -> None:
             self.committed = True
 
     class Store:
@@ -125,7 +135,11 @@ def test_poison_record_does_not_advance_offset() -> None:
     async def exercise() -> None:
         consumer = Consumer()
         with pytest.raises(ValueError):
-            await persist_message(b"{}", consumer, Store())  # type: ignore[arg-type]
+            await persist_message(
+                SimpleNamespace(value=b"{}", topic="logs", partition=2, offset=41),
+                consumer,
+                Store(),  # type: ignore[arg-type]
+            )
         assert consumer.committed is False
 
     asyncio.run(exercise())
@@ -136,3 +150,43 @@ def test_event_id_is_stable_for_replayed_broker_message() -> None:
     first = decode_event(payload)
     replayed = decode_event(payload)
     assert first["event_id"] == replayed["event_id"]
+
+
+def test_different_partition_offsets_never_advance_together(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tp = namedtuple("TopicPartition", ["topic", "partition"])
+    module = ModuleType("aiokafka")
+    module.TopicPartition = tp  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
+
+    class Consumer:
+        def __init__(self) -> None:
+            self.commits: list[dict[Any, int]] = []
+
+        async def commit(self, offsets: dict[Any, int]) -> None:
+            self.commits.append(offsets)
+
+    class Store:
+        def __init__(self) -> None:
+            self.fail = False
+
+        def insert_events(self, events: list[dict[str, Any]]) -> None:
+            if self.fail:
+                raise OSError("ClickHouse temporarily unavailable")
+
+    async def scenario() -> None:
+        consumer = Consumer()
+        store = Store()
+        first = SimpleNamespace(value=encoded(), topic="logs", partition=0, offset=7)
+        other = SimpleNamespace(value=encoded(), topic="logs", partition=1, offset=12)
+        await persist_message(first, consumer, store)  # type: ignore[arg-type]
+        store.fail = True
+        with pytest.raises(OSError):
+            await persist_message(other, consumer, store)  # type: ignore[arg-type]
+        assert consumer.commits == [{tp("logs", 0): 8}]
+        store.fail = False
+        await persist_message(other, consumer, store)  # type: ignore[arg-type]
+        assert consumer.commits == [{tp("logs", 0): 8}, {tp("logs", 1): 13}]
+
+    asyncio.run(scenario())

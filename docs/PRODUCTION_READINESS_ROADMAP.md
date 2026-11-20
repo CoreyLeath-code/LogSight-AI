@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — partition-scoped offsets:** commit only the successfully
+  processed source partition's next offset, including the DLQ path
+  ([PR #67](https://github.com/CoreyLeath-code/LogSight-AI/pull/67)).
 - [x] **Phase 3 — offline DLQ verification foundation:** metadata-only
   source/checksum verification without publishing or replaying payloads
   ([PR #66](https://github.com/CoreyLeath-code/LogSight-AI/pull/66)).
@@ -276,6 +279,19 @@ controlled replay runbook.
 **Not completed:** no automatic replay, tenant authorization, repair approval,
 data-retention enforcement, payload sanitization guarantee, durable deduplication,
 live-broker integration, or operational recovery drill is implemented.
+
+### Partition-scoped consumer offsets (candidate PR)
+
+The ClickHouse worker now uses explicit Kafka `TopicPartition` offset maps
+rather than `commit()` without arguments, which may advance the positions
+of multiple assigned partitions. After an acknowledged ClickHouse write or
+dead-letter publish, only the corresponding source record's next offset is
+committed. Regression tests cover separate partitions, a storage outage,
+and the DLQ acknowledgement path.
+
+**Not phase completion:** inserts can still be duplicated if a broker offset
+commit fails after a successful ClickHouse write. Real rebalance, concurrent
+worker, retention, replay, and broker failure tests remain required.
 
 ## Phase 3 — Durable ingestion and storage
 

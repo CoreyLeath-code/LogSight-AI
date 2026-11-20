@@ -6,6 +6,7 @@ import asyncio
 import base64
 import json
 import sys
+from collections import namedtuple
 from types import ModuleType, SimpleNamespace
 from typing import Any
 
@@ -54,7 +55,8 @@ def test_worker_commits_only_after_quarantine_ack(
 
             return records()
 
-        async def commit(self) -> None:
+        async def commit(self, offsets: Any) -> None:
+            assert offsets == {TopicPartition("logs", 1): 4}
             events.append("commit")
 
     class FakeProducer:
@@ -75,9 +77,11 @@ def test_worker_commits_only_after_quarantine_ack(
             if fail_dlq:
                 raise ConnectionError("DLQ broker unavailable")
 
+    TopicPartition = namedtuple("TopicPartition", ["topic", "partition"])
     module = ModuleType("aiokafka")
     module.AIOKafkaConsumer = FakeConsumer  # type: ignore[attr-defined]
     module.AIOKafkaProducer = FakeProducer  # type: ignore[attr-defined]
+    module.TopicPartition = TopicPartition  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "aiokafka", module)
     monkeypatch.setenv("KAFKA_BOOTSTRAP_SERVERS", "broker:9092")
     monkeypatch.setenv("LOGSIGHT_KAFKA_TOPIC", "logs")

@@ -418,6 +418,18 @@ re-validating privacy controls, enforcing tenant authorization, retaining an
 audit trail, deduplicating replays, and verifying broker recovery are still
 required before any production replay.
 
+### Explicit Kafka consumer offset discipline
+
+The experimental ClickHouse worker now commits only the **source topic and
+partition** of a successfully persisted event, using `offset + 1` as Kafka's
+next-consume position. The malformed-event DLQ path follows the same rule
+after broker acknowledgement. Tests cover separate partitions, storage failure,
+and dead-letter failures without advancing unrelated offsets.
+
+This improves at-least-once failure handling but does **not** implement
+ClickHouse row-level deduplication, Kafka transactions, replay authorization,
+or exactly-once delivery. Phase 3 production approval remains open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -437,6 +449,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** partition-scoped Kafka offset commits after
+  acknowledged ClickHouse writes or DLQ publishes; cross-partition failure tests
+  ([PR #67](https://github.com/CoreyLeath-code/LogSight-AI/pull/67)).
 - [x] **Phase 3 foundation:** metadata-only offline verification of restricted
   dead-letter envelopes, including checksum and corruption checks
   ([PR #66](https://github.com/CoreyLeath-code/LogSight-AI/pull/66)).
