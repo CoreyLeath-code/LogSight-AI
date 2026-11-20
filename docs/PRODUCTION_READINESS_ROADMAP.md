@@ -207,6 +207,20 @@ database idempotency, DLQ/replay policy, TLS/ACLs, authenticated dependencies,
 rebalances and partition recovery, load tests, live dependency integration,
 backup/restore, and owner approval.
 
+### Stable event identifiers (candidate PR)
+
+New enriched events are assigned UUID identifiers, serialized into the Kafka
+envelope, validated by the ClickHouse worker, and persisted in an additive
+ClickHouse column. Replays of the same broker record carry the same identifier.
+New databases include the column and existing installations require an explicit
+additive SQL migration.
+
+This is traceability groundwork, **not duplicate prevention**: the current
+MergeTree table can store multiple rows with the same UUID, and an HTTP retry
+creates a new identifier. A reviewed idempotency-key contract, database
+deduplication strategy, replay tests, and actual broker/storage recovery evidence
+are required before the Phase 3 exit gate can close.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
