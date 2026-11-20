@@ -557,6 +557,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 foundation:** opt-in bounded Kafka idle metadata
+  monitoring with outage/recovery tests, lifecycle cleanup and explicit
+  non-delivery guarantees ([PR #74](https://github.com/CoreyLeath-code/LogSight-AI/pull/74)).
 - [x] **Phase 4 foundation:** separate API liveness and Kafka-producer
   lifecycle readiness with Helm readiness probe and degraded-state tests
   ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
