@@ -6,7 +6,7 @@ chunked transfers without Content-Length.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 
 class IngestionBodyLimit:
@@ -65,7 +65,7 @@ class IngestionBodyLimit:
             if not delivered:
                 delivered = True
                 return {"type": "http.request", "body": body, "more_body": False}
-            return await receive()
+            return cast(dict[str, Any], await receive())
 
         await self.app(scope, replay, send)
 
