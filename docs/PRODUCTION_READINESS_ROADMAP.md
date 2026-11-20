@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — ClickHouse HTTPS client foundation:** verified TLS,
+  optional CA and header-based credentials for the experimental consumer
+  ([PR #71](https://github.com/CoreyLeath-code/LogSight-AI/pull/71)).
 - [x] **Phase 3 — Kafka transport security foundation:** TLS context,
   SASL_SSL configuration and rejection of plaintext credential transport
   ([PR #70](https://github.com/CoreyLeath-code/LogSight-AI/pull/70)).
