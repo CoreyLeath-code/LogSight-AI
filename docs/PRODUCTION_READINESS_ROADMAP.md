@@ -332,6 +332,20 @@ drill ran successfully. Actual connection, restart, rebalance,
 broker outage and authenticated deployment conditions remain
 unverified and Phase 3 remains open.
 
+### Kafka TLS/SASL client settings (candidate PR)
+
+The API producer, worker consumer and restricted DLQ producer now share
+validation for PLAINTEXT development mode, TLS certificate verification
+(`SSL`), and `SASL_SSL` with PLAIN or SCRAM credentials. SASL over
+unencrypted Kafka is prohibited, and inconsistent credential settings
+fail before establishing a broker connection. Unit tests exercise validation
+and the resulting verified TLS context.
+
+**Not complete:** the local Compose broker remains plaintext; no broker
+ACL, secret-store injection, broker identity provisioning, authenticated
+live recovery test, mTLS client certificate policy, credential rotation,
+or secured ClickHouse endpoint is certified. Phase 3 exit remains open.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
