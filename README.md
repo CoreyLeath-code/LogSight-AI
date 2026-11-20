@@ -17,6 +17,52 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### Experimental Kafka-to-ClickHouse sink
+
+The repository includes a single-worker reference sink launched with
+`python -m logsight.kafka_clickhouse_worker` after installing `.[kafka]`.
+Configure `KAFKA_BOOTSTRAP_SERVERS`, `LOGSIGHT_KAFKA_TOPIC`,
+`LOGSIGHT_KAFKA_CONSUMER_GROUP`, and `CLICKHOUSE_URL`, and create the
+ClickHouse schema using [deploy/clickhouse/init.sql](deploy/clickhouse/init.sql).
+
+The sink validates and re-redacts consumed events, maps them to the ClickHouse
+JSONEachRow table schema, and commits a Kafka consumer offset only after
+ClickHouse insert returns successfully. On invalid records or storage
+failure it stops rather than silently skipping an event.
+
+**Not yet production-ready:** failed offset commits and repeated deliveries can
+create duplicate ClickHouse rows, because no durable event-ID deduplication
+policy exists. A malformed record can block a partition; dead-letter
+handling, authentication/TLS, migrations, consumer rebalances, retry budgets,
+retention, and broker/storage outage drills remain open. No live-broker
+integration result is asserted.
+
+### Experimental broker-acknowledged API ingestion
+
+Set `LOGSIGHT_API_KAFKA_ENABLED=true`, `KAFKA_BOOTSTRAP_SERVERS`, and
+`LOGSIGHT_KAFKA_TOPIC` to opt into broker-acknowledged ingestion. The API
+starts/stops the Kafka producer with its application lifespan and returns
+HTTP 503 if an acknowledgement cannot be confirmed. This mode requires
+the optional `kafka` dependency and must not be combined with the current
+Redis admission controller, whose dedup keys are committed before broker
+acknowledgements. For an experimental isolated deployment, omit
+`LOGSIGHT_REDIS_URL` and install `.[api,kafka]`.
+
+**Delivery caveats:** HTTP 503 does not prove broker rejection. Retrying may
+duplicate events. Batch submissions are not atomic: earlier events may have
+been acknowledged before a later event fails. The process-local recent-event
+cache is not durable, and no ClickHouse consumer or cross-tenant isolation is
+implemented. This mode is for controlled evaluation, not production.
+
+### Bounded API ingestion bodies (incremental)
+
+The API now limits request bodies for `POST /v1/logs` and
+`POST /v1/logs/batch` using `LOGSIGHT_API_MAX_BODY_BYTES` (default:
+1,048,576 bytes; configurable up to 16 MiB). Oversized requests return HTTP
+413 before parsing or scoring. The limit covers requests with and without a
+`Content-Length` header. It does **not** replace ingress-level request limits,
+per-tenant admission controls, concurrency limits, or timeouts.
+
 ### API access hardening (incremental)
 
 The optional FastAPI gateway supports `LOGSIGHT_API_AUTH_MODE=token` with a
@@ -310,10 +356,42 @@ Pull requests retain the existing formatting, linting, strict typing, unit/integ
 - [x] RAG incident investigator with versioned runbooks/commits
 - [x] Labeled benchmark corpus with precision/recall and alert-burden metrics
 
+## Production-readiness implementation tracker
+
+Checked boxes below mean the **specific implementation milestone** was merged
+with passing repository CI; they do not mean the entire production phase passed
+its operational launch gate. Phase 0–6 promotion checkboxes remain open until
+the full exit evidence and owner approval are recorded.
+
+- [x] **Phase 1 foundation:** optional bearer-token API guard and negative
+  authorization tests ([PR #55](https://github.com/CoreyLeath-code/LogSight-AI/pull/55)).
+- [x] **Phase 1 foundation:** scope Redis duplicate suppression keys by
+  service admission scope ([PR #58](https://github.com/CoreyLeath-code/LogSight-AI/pull/58)).
+- [x] **Phase 1 foundation:** ingestion body-size limit and streamed-payload
+  regression tests ([PR #57](https://github.com/CoreyLeath-code/LogSight-AI/pull/57)).
+- [x] **Phase 2 foundation:** selected credentials and email addresses redacted
+  before API processing/caching ([PR #56](https://github.com/CoreyLeath-code/LogSight-AI/pull/56)).
+- [x] **Phase 3 foundation:** Kafka producer acknowledgements and bounded
+  publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
+- [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
+  ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 foundation:** experimental at-least-once Kafka-to-ClickHouse
+  sink with failure-contract tests
+  ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
+- [ ] **Phase 1 exit:** tenant-scoped authorization, workload identity,
+  ingress controls, audited access and security sign-off.
+- [ ] **Phase 2 exit:** approved data classification, comprehensive redaction,
+  retention/deletion and key-management evidence.
+- [ ] **Phase 3 exit:** stable event IDs, deduplication, DLQ/replay,
+  authenticated dependencies, live recovery drills and durable query path.
+
+See the [detailed roadmap](docs/PRODUCTION_READINESS_ROADMAP.md) for all
+remaining Phase 0–6 requirements.
+
 ## Production-readiness roadmap
 
-The next roadmap focuses on proof that the whole service can be safely operated,
-not additional adapters. All items remain open until their required exit evidence
+The remaining roadmap focuses on proof that the whole service can be safely operated,
+not additional adapters. **Phase-level** items remain open until their exit evidence
 has been reviewed and linked from a release record.
 
 - [ ] **Phase 0 — Ownership and release boundary:** accountable owners, SLOs,

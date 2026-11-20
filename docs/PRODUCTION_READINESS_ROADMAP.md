@@ -11,6 +11,35 @@ This roadmap is a promotion contract, not a list of features. An item is complet
 only when its code, configuration, automated tests, operational evidence, and
 owner approval are linked from a reviewed pull request or release record.
 
+## Verified implementation milestones (not phase approvals)
+
+The following items were merged into `main` after repository CI validation.
+These checkmarks cover the named code/test milestone only. None of Phases 0–6
+has yet met its full deployment-specific exit criteria.
+
+- [x] **Phase 1 — API authentication foundation:** optional bearer-token guard,
+  startup checks, and negative authentication tests
+  ([PR #55](https://github.com/CoreyLeath-code/LogSight-AI/pull/55)).
+- [x] **Phase 1 — bounded request bodies:** ingestion size caps and streamed
+  request tests ([PR #57](https://github.com/CoreyLeath-code/LogSight-AI/pull/57)).
+- [x] **Phase 2 — targeted API redaction:** selected credentials/emails redacted
+  ahead of parsing, local caching and responses
+  ([PR #56](https://github.com/CoreyLeath-code/LogSight-AI/pull/56)).
+- [x] **Phase 3 — Kafka producer contract:** broker acknowledgement,
+  idempotent producer configuration and publish timeouts
+  ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
+- [x] **Phase 3 — experimental API producer path:** optional Kafka publish
+  before success response, with negative delivery tests
+  ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 3 — experimental ClickHouse sink:** offset commit after successful
+  insert, schema tests and storage-failure handling
+  ([PR #61](https://github.com/CoreyLeath-code/LogSight-AI/pull/61)).
+
+**Not yet complete:** none of these milestones proves end-to-end exactly-once
+delivery, multi-tenant security, approved privacy controls or staging durability.
+The phase-level checkboxes below remain unchecked until the documented exit
+evidence is available.
+
 ## Scope and non-goals
 
 The supported production target is an authenticated service that ingests
@@ -62,6 +91,26 @@ secret from a deployment secret manager, transmit it only over TLS, and set
 publicly reachable deployment**. `/health` remains a public liveness probe;
 metrics and recent-event endpoints are guarded in token mode.
 
+### Additional API request admission control (candidate PR)
+
+A bounded ASGI request-body guard now checks declared and streamed payload
+sizes before validation, parsing, or inference for ingestion routes. The
+configured cap defaults to 1 MiB and tests cover oversized JSON, streamed
+requests, and successful small requests. This is partial Phase 1 evidence;
+concurrency/timeouts, tenant-aware quotas, identity and authorization,
+external ingress policy, and deployment load evidence remain outstanding.
+
+### Scoped Redis admission-key hardening (PR #58)
+
+Redis deduplication includes the same hashed admission scope as its per-scope
+rate-limit key. Equal event fingerprints from unrelated service scopes no longer
+share a deduplication key. Regression tests verify scope separation and stable
+same-scope keys.
+
+**Boundary:** the scope still comes from a caller-supplied service field;
+this does not provide trusted workload identity or tenant authorization.
+The Phase 1 exit criteria remain open.
+
 ## Phase 1 — API trust boundary
 
 - [ ] Require workload identity at the ingress boundary (for example OIDC,
@@ -111,18 +160,52 @@ classification policy. Review these limits before handling real log data.
 **Exit evidence:** data-flow diagram, approved data classification, redaction
 tests, retention/deletion test evidence, and secrets/key-management runbook.
 
-### Scoped Redis admission-key hardening (candidate PR)
+### Kafka producer delivery contract (candidate PR)
 
-Redis deduplication now incorporates the same hashed admission scope as
-the per-scope rate-limit key. Previously, equal message fingerprints from
-unrelated services could collide in the shared deduplication namespace.
-Regression tests demonstrate distinct keys for distinct scopes and stable
-keys for repeated events in the same scope.
+The optional `KafkaStream` adapter now requests broker acknowledgements from
+all in-sync replicas and enables producer idempotence. Client publish waits
+are bounded and acknowledgement timeout raises an explicit exception;
+unit tests verify these settings without claiming a live-broker recovery drill.
 
-**Boundary:** callers still provide the scope via the event service field.
-This is **not** authenticated tenant identity, complete tenant authorization,
-or protection against an untrusted client asserting another service name.
-Workload identity and tenant-scoped access controls remain open Phase 1 gates.
+**Still missing:** the FastAPI gateway does not yet route accepted events
+through Kafka; TLS/SASL, ACLs, partitioning, retries and downstream ClickHouse
+consumer ownership require explicit deployment design and integration evidence.
+A publish timeout is an indeterminate outcome and is **not** proof of rejection
+by the broker. Producer idempotence alone does not make the end-to-end pipeline
+exactly-once.
+
+### Experimental API-to-Kafka acknowledgement path (candidate PR)
+
+When explicitly enabled, the FastAPI gateway starts a Kafka producer during
+application lifespan, publishes the redacted event before returning an API
+success, and maps unconfirmed broker acknowledgements to HTTP 503 without
+adding the event to local metrics or recent-event cache. Unit tests use a
+fake producer to verify success and failure cases. Default local behavior
+remains unchanged.
+
+**This does not close Phase 3:** the broker must still be configured with
+authenticated transport, ACLs, replication and retention; there is no
+durable ClickHouse consumer, idempotency/replay contract, staging drill,
+or tenant-safe recent-event store. Retrying after HTTP 503 can duplicate
+a broker-accepted event. Batch ingestion can partially succeed before a
+failure. Redis admission mode is blocked in experimental Kafka mode until
+the pre-ack deduplication ordering is corrected.
+
+### Experimental Kafka-to-ClickHouse sink (candidate PR)
+
+The reference worker consumes the broker topic with auto-commit disabled,
+validates and re-redacts the event schema, inserts a matching row into the
+existing ClickHouse table, then commits the consumer offset only after the
+storage call succeeds. Unit tests exercise valid/invalid event envelopes,
+storage failures, and no-offset-commit behavior for poison records.
+
+This is *at-least-once* processing groundwork, not an end-to-end durability
+guarantee. ClickHouse insert success followed by offset-commit failure can
+duplicate records. Malformed events stop progress until explicitly resolved.
+A production promotion still requires reviewed stable event identifiers,
+database idempotency, DLQ/replay policy, TLS/ACLs, authenticated dependencies,
+rebalances and partition recovery, load tests, live dependency integration,
+backup/restore, and owner approval.
 
 ## Phase 3 — Durable ingestion and storage
 
