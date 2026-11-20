@@ -1,5 +1,7 @@
 """Tests for enterprise observability primitives."""
 
+import uuid
+
 from logsight.enterprise import (
     WebhookNotifier,
     enrich,
@@ -17,6 +19,9 @@ def test_enriched_event_contains_correlation_fields() -> None:
     assert event.source == "kubernetes"
     assert event.host == "node-1"
     assert event.fingerprint
+    assert str(uuid.UUID(event.event_id)) == event.event_id
+    assert event.to_dict()["event_id"] == event.event_id
+    assert event.to_json() == event.to_json()
     assert event.to_dict()["level"] == "ERROR"
     assert '"payments"' in event.to_json()
 
@@ -37,3 +42,10 @@ def test_hybrid_score_is_bounded() -> None:
 
 def test_webhook_without_url_is_safe() -> None:
     assert WebhookNotifier(url=None).send({"severity": "high"}) is False
+
+
+def test_distinct_ingested_events_get_distinct_ids() -> None:
+    first = enrich(parse_line("INFO heartbeat"))
+    second = enrich(parse_line("INFO heartbeat"))
+    assert first.event_id != second.event_id
+    assert first.fingerprint == second.fingerprint
