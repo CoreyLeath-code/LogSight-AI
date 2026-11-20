@@ -71,7 +71,9 @@ class RedisAdmissionController:
         if not scope:
             raise ValueError("scope is required for Redis admission")
         scope_digest = hashlib.sha256(scope.encode("utf-8")).hexdigest()
-        dedup_key = f"{self.key_prefix}:dedup:{event.fingerprint}"
+        # Deduplication must share the caller's admission scope. Otherwise an
+        # identical message from an unrelated service suppresses its event.
+        dedup_key = f"{self.key_prefix}:dedup:{scope_digest}:{event.fingerprint}"
         rate_key = f"{self.key_prefix}:rate:{scope_digest}"
         response = await self.client.eval(
             _ADMIT_SCRIPT,
