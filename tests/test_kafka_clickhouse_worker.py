@@ -86,6 +86,7 @@ def test_storage_failure_does_not_advance_consumer_offset(monkeypatch: pytest.Mo
     module = ModuleType("aiokafka")
     module.TopicPartition = tp  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "aiokafka", module)
+
     class Consumer:
         commits = 0
 
