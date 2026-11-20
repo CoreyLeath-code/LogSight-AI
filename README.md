@@ -8,7 +8,6 @@
 
 [![CI](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml/badge.svg)](https://github.com/CoreyLeath-code/LogSight-AI/actions/workflows/codeql.yml)
-[![Latest Release](https://img.shields.io/github/v/release/CoreyLeath-code/LogSight-AI?display_name=tag&sort=semver)](https://github.com/CoreyLeath-code/LogSight-AI/releases/latest)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-supported-2496ED.svg)](https://www.docker.com/)
@@ -21,6 +20,18 @@ LogSight-AI is a local-first log analysis and anomaly-detection platform that is
 ### Production status
 
 LogSight-AI is a production-oriented engineering foundation; it is **not yet approved for an internet-facing, multi-tenant, or consequential production deployment**. The completed roadmap below establishes interfaces and controls. The remaining work is governed by the [production-readiness roadmap](docs/PRODUCTION_READINESS_ROADMAP.md), whose exit evidence—not checkbox completion alone—defines promotion.
+
+## Reviewer map
+
+| Start here | Evidence to inspect |
+|---|---|
+| [CLI and tests](#quick-start) | Local setup and executable verification commands |
+| [Supported detection behavior](#current-detection-contract) | Explainable analysis and explicit algorithm boundaries |
+| [Architecture](#enterprise-architecture) | Adapters versus the core local-first path |
+| [Promotion blockers](docs/PRODUCTION_READINESS_ROADMAP.md) | Outstanding evidence required for production readiness |
+| [CI workflows](.github/workflows/) | Automated checks and release configuration |
+
+**Scope:** an integration shown in the architecture is not proof of a continuously deployed or load-tested external service. Follow the linked tests and runbooks to determine which adapters are exercised.
 
 ## Enterprise architecture
 
