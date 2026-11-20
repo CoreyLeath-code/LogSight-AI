@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS logsight.events
     span_id Nullable(String),
     template Nullable(String),
     fingerprint String,
+    event_id String DEFAULT '',
     attributes String
 )
 ENGINE = MergeTree
