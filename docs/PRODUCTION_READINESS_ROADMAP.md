@@ -401,6 +401,21 @@ health check. Kafka broker connectivity after startup, ClickHouse health,
 Redis, inference workers, multi-pod probe behavior, and staging alerts
 must still be tested. No Phase 4 production exit is claimed.
 
+### Kafka acknowledgement-aware readiness (candidate PR)
+
+The experimental API Kafka producer now records failed acknowledgements,
+timeouts and cancelled publishes as not-ready. Subsequent successful
+broker-acknowledged publishing can restore readiness. `/health` remains
+a lightweight independent liveness probe while `/ready` reflects the
+local producer state and observed delivery errors. Tests cover transitions
+and actual FastAPI responses.
+
+**Incomplete:** idle broker failures are not detected until a send, and
+traffic removal can prevent a successful write from restoring readiness
+without an operator action. There is no periodic bounded authenticated
+health probe, deployment failure drill, or evidence of downstream durable
+delivery. This does not close Phase 4.
+
 ## Phase 4 — Availability, resilience, and observability
 
 - [ ] Implement dependency-aware readiness and startup probes; distinguish
