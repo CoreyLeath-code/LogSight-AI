@@ -72,7 +72,7 @@ class KafkaStream:
             **kafka_security_settings(),
         )
         self._ready = False
-        self._metadata_ready = not bool(self.monitor_interval_seconds)
+        self._metadata_ready = True  # Remain compatible until first scheduled probe.
         try:
             await producer.start()
         except BaseException:
