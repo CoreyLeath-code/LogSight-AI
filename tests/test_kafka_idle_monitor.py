@@ -221,6 +221,7 @@ def test_unexpected_monitor_stop_fails_readiness(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A dead background monitor cannot leave a stale ready signal."""
+
     class Metadata:
         def partitions_for_topic(self, topic: str) -> set[int]:
             return {0}
