@@ -79,6 +79,20 @@ metrics and recent-event endpoints are guarded in token mode.
 **Exit evidence:** threat model, authenticated end-to-end tests, authorization
 matrix, rate-limit/load results, and security review sign-off.
 
+### Initial API redaction implementation (candidate PR)
+
+The optional API ingestion path now applies a deterministic, dependency-free
+text-redaction pass before parsing and enrichment. Regression tests cover
+common credential assignments, bearer credentials, email addresses, and
+exclusion of representative sensitive strings from API responses and the
+process-local recent-event cache.
+
+**Not a complete data-governance control:** pattern matching is incomplete and
+cannot discover arbitrary personal or regulated information. It does not
+address already-stored records, external adapters, parser use outside the API,
+retention/deletion, tenant boundaries, audit trails, or deployment-specific
+classification policy. Review these limits before handling real log data.
+
 ## Phase 2 — Data governance and privacy
 
 - [ ] Define the log schema, classification policy, approved attributes, and
