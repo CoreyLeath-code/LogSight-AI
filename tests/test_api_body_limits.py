@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 pytest.importorskip("fastapi")
@@ -40,36 +42,39 @@ def test_oversized_single_and_batch_requests(monkeypatch: pytest.MonkeyPatch) ->
     api._recent.clear()
 
 
-@pytest.mark.anyio
-async def test_streamed_body_over_limit_is_rejected() -> None:
+def test_streamed_body_over_limit_is_rejected() -> None:
     """ASGI clients may stream without a Content-Length header."""
     from logsight.request_limits import IngestionBodyLimit
 
-    reached_app = False
+    async def scenario() -> None:
 
-    async def inner(scope, receive, send):
-        nonlocal reached_app
-        reached_app = True
+        reached_app = False
 
-    wrapper = IngestionBodyLimit(inner, max_body_bytes=5)
-    incoming = iter(
-        [
-            {"type": "http.request", "body": b"abc", "more_body": True},
-            {"type": "http.request", "body": b"def", "more_body": False},
-        ]
-    )
-    output = []
+        async def inner(scope, receive, send):
+            nonlocal reached_app
+            reached_app = True
 
-    async def receive():
-        return next(incoming)
+        wrapper = IngestionBodyLimit(inner, max_body_bytes=5)
+        incoming = iter(
+            [
+                {"type": "http.request", "body": b"abc", "more_body": True},
+                {"type": "http.request", "body": b"def", "more_body": False},
+            ]
+        )
+        output = []
 
-    async def send(message):
-        output.append(message)
+        async def receive():
+            return next(incoming)
 
-    await wrapper(
-        {"type": "http", "method": "POST", "path": "/v1/logs", "headers": []},
-        receive,
-        send,
-    )
-    assert reached_app is False
-    assert output[0]["status"] == 413
+        async def send(message):
+            output.append(message)
+
+        await wrapper(
+            {"type": "http", "method": "POST", "path": "/v1/logs", "headers": []},
+            receive,
+            send,
+        )
+        assert reached_app is False
+        assert output[0]["status"] == 413
+
+    asyncio.run(scenario())
