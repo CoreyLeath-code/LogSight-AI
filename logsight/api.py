@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import secrets
+import uuid
 from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -54,7 +55,7 @@ _inference_dispatcher: CeleryInferenceDispatcher | None = build_celery_dispatche
 
 
 async def _process(
-    item: LogPayload, *, kafka_stream: KafkaStream | None = None
+    item: LogPayload, *, kafka_stream: KafkaStream | None = None, event_id: str | None = None
 ) -> tuple[EnrichedLog, Any, str | None]:
     with span("logsight.ingest", service=item.service, source=item.source) as _:
         event = correlate_with_active_span(
@@ -65,6 +66,8 @@ async def _process(
                 host=item.host,
             )
         )
+        if event_id is not None:
+            event.event_id = event_id
         if _admission_controller is not None:
             decision = await _admission_controller.admit(event, item.service)
             if not decision.accepted:
@@ -174,8 +177,23 @@ def create_app() -> Any:
 
     @app.post("/v1/logs")
     async def ingest(payload: LogPayload, request: Request) -> dict[str, Any]:
+        # Optional request identity for retries; not a deduplication guarantee.
+        key = request.headers.get("idempotency-key")
+        event_id = None
+        if key is not None:
+            try:
+                parsed_key = uuid.UUID(key)
+            except (ValueError, AttributeError) as exc:
+                raise HTTPException(
+                    status_code=400, detail="Idempotency-Key must be a canonical UUIDv4"
+                ) from exc
+            if parsed_key.version != 4 or str(parsed_key) != key:
+                raise HTTPException(
+                    status_code=400, detail="Idempotency-Key must be a canonical UUIDv4"
+                )
+            event_id = key
         event, result, task_id = await _process(
-            payload, kafka_stream=request.app.state.kafka_stream
+            payload, kafka_stream=request.app.state.kafka_stream, event_id=event_id
         )
         response: dict[str, Any] = {"event": event.to_dict(), "anomaly": asdict(result)}
         if task_id is not None:
