@@ -31,9 +31,20 @@ class KafkaStream:
     isolated prevents the base CLI from requiring a broker.
     """
 
-    def __init__(self, bootstrap_servers: str, topic: str) -> None:
+    def __init__(
+        self,
+        bootstrap_servers: str,
+        topic: str,
+        *,
+        publish_timeout_seconds: float = 10.0,
+    ) -> None:
+        if not bootstrap_servers.strip() or not topic.strip():
+            raise ValueError("Kafka bootstrap servers and topic must be provided")
+        if not 0 < publish_timeout_seconds <= 300:
+            raise ValueError("publish_timeout_seconds must be between 0 and 300")
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
+        self.publish_timeout_seconds = publish_timeout_seconds
         self._producer: Any = None
 
     async def start(self) -> None:
@@ -41,13 +52,25 @@ class KafkaStream:
             from aiokafka import AIOKafkaProducer
         except ImportError as exc:
             raise RuntimeError("Install the 'kafka' extra to use KafkaStream") from exc
-        self._producer = AIOKafkaProducer(bootstrap_servers=self.bootstrap_servers)
+        self._producer = AIOKafkaProducer(
+            bootstrap_servers=self.bootstrap_servers,
+            acks="all",
+            enable_idempotence=True,
+        )
         await self._producer.start()
 
     async def publish(self, event: EnrichedLog) -> None:
         if self._producer is None:
             raise RuntimeError("KafkaStream.start() must be called before publish()")
-        await self._producer.send_and_wait(self.topic, event.to_json().encode("utf-8"))
+        # A timeout is an indeterminate outcome: broker acceptance may have
+        # succeeded. Callers must not assume that retrying is exactly-once.
+        try:
+            await asyncio.wait_for(
+                self._producer.send_and_wait(self.topic, event.to_json().encode("utf-8")),
+                timeout=self.publish_timeout_seconds,
+            )
+        except TimeoutError as exc:
+            raise TimeoutError("Kafka publish acknowledgement timed out") from exc
 
     async def stop(self) -> None:
         if self._producer is not None:
