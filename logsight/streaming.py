@@ -74,6 +74,13 @@ class KafkaStream:
         except TimeoutError as exc:
             raise TimeoutError("Kafka publish acknowledgement timed out") from exc
 
+    def is_ready(self) -> bool:
+        """Report whether the configured Kafka producer is initialized locally.
+
+        Does not prove broker reachability following startup.
+        """
+        return self._producer is not None
+
     async def stop(self) -> None:
         if self._producer is not None:
             await self._producer.stop()
