@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
@@ -48,6 +49,15 @@ class KafkaStream:
         self.publish_timeout_seconds = publish_timeout_seconds
         self._producer: Any = None
         self._ready = False
+        self._monitor_task: asyncio.Task[None] | None = None
+        raw_interval = os.getenv("LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS", "0")
+        try:
+            self.monitor_interval_seconds = float(raw_interval)
+        except ValueError as exc:
+            raise ValueError("Invalid Kafka monitor interval") from exc
+        if self.monitor_interval_seconds != 0 and not 5 <= self.monitor_interval_seconds <= 300:
+            raise ValueError("Kafka monitor interval must be zero or between 5 and 300 seconds")
+        self.monitor_timeout_seconds = min(self.publish_timeout_seconds, 5.0)
 
     async def start(self) -> None:
         try:
@@ -68,6 +78,34 @@ class KafkaStream:
             raise
         self._producer = producer
         self._ready = True
+        if self.monitor_interval_seconds:
+            self._monitor_task = asyncio.create_task(self._monitor_metadata())
+
+    async def _probe_metadata(self) -> None:
+        """Force a live metadata request; never accept cached partition state."""
+        producer = self._producer
+        if producer is None:
+            self._ready = False
+            return
+        try:
+            metadata = await asyncio.wait_for(
+                producer.client.fetch_all_metadata(),
+                timeout=self.monitor_timeout_seconds,
+            )
+            partitions = metadata.partitions_for_topic(self.topic)
+            if not partitions:
+                raise RuntimeError("Kafka topic has no available partitions")
+        except Exception:
+            self._ready = False
+        else:
+            # Metadata availability is not proof of successful Kafka writes.
+            # It is one signal used alongside broker-acknowledged publishes.
+            self._ready = True
+
+    async def _monitor_metadata(self) -> None:
+        while True:
+            await asyncio.sleep(self.monitor_interval_seconds)
+            await self._probe_metadata()
 
     async def publish(self, event: EnrichedLog) -> None:
         if self._producer is None:
@@ -99,6 +137,14 @@ class KafkaStream:
 
     async def stop(self) -> None:
         self._ready = False
+        monitor = self._monitor_task
+        self._monitor_task = None
+        if monitor is not None:
+            monitor.cancel()
+            try:
+                await monitor
+            except asyncio.CancelledError:
+                pass
         producer = self._producer
         self._producer = None
         if producer is not None:

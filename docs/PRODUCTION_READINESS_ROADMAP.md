@@ -31,6 +31,9 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 — optional Kafka idle connectivity foundation:** bounded
+  metadata probes, failure/recovery tests and shutdown cleanup; not a write SLA
+  ([PR #74](https://github.com/CoreyLeath-code/LogSight-AI/pull/74)).
 - [x] **Phase 4 — local producer readiness foundation:** independent
   liveness and Kafka producer lifecycle readiness, Helm probe and tests
   ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
@@ -415,6 +418,20 @@ traffic removal can prevent a successful write from restoring readiness
 without an operator action. There is no periodic bounded authenticated
 health probe, deployment failure drill, or evidence of downstream durable
 delivery. This does not close Phase 4.
+
+### Optional bounded Kafka idle metadata checks (candidate PR)
+
+An opt-in periodic task makes fresh metadata requests for the configured
+topic, with a bounded timeout and no synthetic writes, so `/ready` can
+degrade on idle broker outages and recover on subsequent successful
+metadata reads. Tests cover transport failure, timeout, empty metadata,
+interval validation and lifecycle cancellation.
+
+**Exit gap:** this is a broker metadata probe, **not** a write-path,
+replication, queue-lag, ClickHouse, or end-to-end durability guarantee.
+An unavailable write path may coexist with responsive metadata. Live
+authenticated Kafka failure/recovery drills, alerting, HA behavior,
+controlled retry budgets, and real deployment evidence remain open.
 
 ## Phase 4 — Availability, resilience, and observability
 

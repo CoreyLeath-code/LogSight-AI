@@ -520,6 +520,24 @@ ClickHouse persistence. Recovering a degraded pod may require a successful
 internal probe or restart; a bounded, authenticated broker health check
 and deployment-level failure drills remain open. Phase 4 remains unchecked.
 
+### Optional idle Kafka metadata monitoring (Phase 4 foundation)
+
+Set `LOGSIGHT_KAFKA_MONITOR_INTERVAL_SECONDS` to 5–300 seconds
+(default `0`, disabled) to periodically request **fresh broker metadata**
+for the configured Kafka topic using the existing authenticated producer
+connection. The request is bounded by a five-second maximum, and unavailable
+or empty topic metadata causes `/ready` to return HTTP 503. Successful
+metadata refresh can restore readiness during idle periods without requiring
+an HTTP write. The monitor stops with the producer lifecycle.
+
+**Boundary:** topic metadata reachability is not the same as a successful
+write acknowledgement, in-sync-replica durability, healthy downstream
+ClickHouse storage or a complete HA probe. A metadata success may restore
+readiness after a publish failure despite continuing write failures.
+Use this only in controlled staging until broker ACLs, leader changes,
+restarts, alert thresholds and outage behavior are verified in live drills.
+Phase 4 remains open.
+
 ## Production-readiness implementation tracker
 
 Checked boxes below mean the **specific implementation milestone** was merged
@@ -539,6 +557,9 @@ the full exit evidence and owner approval are recorded.
   publish timeout ([PR #59](https://github.com/CoreyLeath-code/LogSight-AI/pull/59)).
 - [x] **Phase 3 foundation:** opt-in API-to-Kafka broker-acknowledged path
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
+- [x] **Phase 4 foundation:** opt-in bounded Kafka idle metadata
+  monitoring with outage/recovery tests, lifecycle cleanup and explicit
+  non-delivery guarantees ([PR #74](https://github.com/CoreyLeath-code/LogSight-AI/pull/74)).
 - [x] **Phase 4 foundation:** separate API liveness and Kafka-producer
   lifecycle readiness with Helm readiness probe and degraded-state tests
   ([PR #72](https://github.com/CoreyLeath-code/LogSight-AI/pull/72)).
