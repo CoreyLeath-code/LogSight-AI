@@ -33,7 +33,9 @@ def test_command_prints_verified_metadata_without_raw_message(
 
 @pytest.mark.parametrize("kind", ["missing", "invalid", "oversized"])
 def test_command_fails_without_disclosing_payloads(
-    kind: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    kind: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     file = tmp_path / "restricted.json"
