@@ -151,6 +151,22 @@ a broker-accepted event. Batch ingestion can partially succeed before a
 failure. Redis admission mode is blocked in experimental Kafka mode until
 the pre-ack deduplication ordering is corrected.
 
+### Experimental Kafka-to-ClickHouse sink (candidate PR)
+
+The reference worker consumes the broker topic with auto-commit disabled,
+validates and re-redacts the event schema, inserts a matching row into the
+existing ClickHouse table, then commits the consumer offset only after the
+storage call succeeds. Unit tests exercise valid/invalid event envelopes,
+storage failures, and no-offset-commit behavior for poison records.
+
+This is *at-least-once* processing groundwork, not an end-to-end durability
+guarantee. ClickHouse insert success followed by offset-commit failure can
+duplicate records. Malformed events stop progress until explicitly resolved.
+A production promotion still requires reviewed stable event identifiers,
+database idempotency, DLQ/replay policy, TLS/ACLs, authenticated dependencies,
+rebalances and partition recovery, load tests, live dependency integration,
+backup/restore, and owner approval.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda

@@ -17,6 +17,26 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### Experimental Kafka-to-ClickHouse sink
+
+The repository includes a single-worker reference sink launched with
+`python -m logsight.kafka_clickhouse_worker` after installing `.[kafka]`.
+Configure `KAFKA_BOOTSTRAP_SERVERS`, `LOGSIGHT_KAFKA_TOPIC`,
+`LOGSIGHT_KAFKA_CONSUMER_GROUP`, and `CLICKHOUSE_URL`, and create the
+ClickHouse schema using [deploy/clickhouse/init.sql](deploy/clickhouse/init.sql).
+
+The sink validates and re-redacts consumed events, maps them to the ClickHouse
+JSONEachRow table schema, and commits a Kafka consumer offset only after
+ClickHouse insert returns successfully. On invalid records or storage
+failure it stops rather than silently skipping an event.
+
+**Not yet production-ready:** failed offset commits and repeated deliveries can
+create duplicate ClickHouse rows, because no durable event-ID deduplication
+policy exists. A malformed record can block a partition; dead-letter
+handling, authentication/TLS, migrations, consumer rebalances, retry budgets,
+retention, and broker/storage outage drills remain open. No live-broker
+integration result is asserted.
+
 ### Experimental broker-acknowledged API ingestion
 
 Set `LOGSIGHT_API_KAFKA_ENABLED=true`, `KAFKA_BOOTSTRAP_SERVERS`, and
