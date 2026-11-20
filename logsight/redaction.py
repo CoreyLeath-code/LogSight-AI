@@ -12,7 +12,7 @@ _REPLACEMENT = "[REDACTED]"
 _BEARER = re.compile(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/-]+={0,2}")
 _ASSIGNMENT = re.compile(
     r"(?i)(\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|"
-    r"refresh[_-]?token|authorization)\b\s*[:=]\s*)(?:\\"[^\\"]*\\"|'[^']*'|[^\s,;]+)"
+    r"refresh[_-]?token|authorization)\b\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;]+)"
 )
 _EMAIL = re.compile(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b")
 
