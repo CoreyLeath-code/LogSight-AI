@@ -277,6 +277,19 @@ controlled replay runbook.
 data-retention enforcement, payload sanitization guarantee, durable deduplication,
 live-broker integration, or operational recovery drill is implemented.
 
+### Partition-scoped consumer offsets (candidate PR)
+
+The ClickHouse worker now uses explicit Kafka `TopicPartition` offset maps
+rather than `commit()` without arguments, which may advance the positions
+of multiple assigned partitions. After an acknowledged ClickHouse write or
+dead-letter publish, only the corresponding source record's next offset is
+committed. Regression tests cover separate partitions, a storage outage,
+and the DLQ acknowledgement path.
+
+**Not phase completion:** inserts can still be duplicated if a broker offset
+commit fails after a successful ClickHouse write. Real rebalance, concurrent
+worker, retention, replay, and broker failure tests remain required.
+
 ## Phase 3 — Durable ingestion and storage
 
 - [ ] Route accepted events through a durable, authenticated Kafka/Redpanda
