@@ -217,7 +217,6 @@ def test_metadata_success_does_not_erase_failed_publish(
     asyncio.run(asyncio.wait_for(scenario(), timeout=5))
 
 
-
 def test_unexpected_monitor_stop_fails_readiness(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
