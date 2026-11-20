@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 import os
 import secrets
+from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from collections import deque
 from dataclasses import asdict
 from typing import Any
 
