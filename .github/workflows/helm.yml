@@ -82,6 +82,23 @@ jobs:
             echo "Accepted monitoring ingress without explicit selectors"
             exit 1
           fi
+      - name: Validate immutable staging image digest contract
+        run: |
+          DIGEST="sha256:$(printf 'a%.0s' {1..64})"
+          helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set image.requireDigest=true \
+            --set-string image.digest="$DIGEST" > rendered-immutable.yaml
+          grep -q "logsight-ai@$DIGEST" rendered-immutable.yaml
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set image.requireDigest=true > /dev/null 2>&1; then
+            echo "Staging image digest requirement allowed a mutable tag"
+            exit 1
+          fi
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set-string image.digest=sha256:bad > /dev/null 2>&1; then
+            echo "Invalid image digest accepted"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v7
         with:
           name: helm-manifests
