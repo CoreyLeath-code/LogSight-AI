@@ -22,3 +22,15 @@ groups:
           summary: "Redis-related LogSight readiness failures observed"
           description: "The API reported Redis admission readiness failures; check authenticated Redis connectivity and probe budgets."
           runbook_url: "https://github.com/CoreyLeath-code/LogSight-AI/blob/main/docs/PHASE4_ALERT_RESPONSE.md"
+      - alert: LogSightAPIMetricsScrapeMissing
+        # Replace logsight-ai with the deployment's verified Prometheus job label.
+        # 'up == 0' detects scrape failures of known targets; absent() catches
+        # missing series/target discovery. This does not prove service availability.
+        expr: '(up{job="logsight-ai"} == 0) or absent(up{job="logsight-ai"})'
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LogSight API metrics scrape missing or unhealthy"
+          description: "Check service discovery, scraper credentials, NetworkPolicy ingress, TLS, and Prometheus target health. This is a scrape signal, not an end-to-end availability SLI."
+          runbook_url: "https://github.com/CoreyLeath-code/LogSight-AI/blob/main/docs/PHASE4_ALERT_RESPONSE.md"
