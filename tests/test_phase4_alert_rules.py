@@ -29,9 +29,7 @@ def test_alert_rules_are_parseable_and_use_existing_fixed_metrics() -> None:
         assert "sum by (job)" in expression
         assert rule["for"] == "2m"
         assert rule["labels"]["severity"] == "warning"
-        assert rule["annotations"]["runbook_url"].endswith(
-            "/docs/PHASE4_ALERT_RESPONSE.md"
-        )
+        assert rule["annotations"]["runbook_url"].endswith("/docs/PHASE4_ALERT_RESPONSE.md")
 
 
 def test_example_rules_have_no_sensitive_or_high_cardinality_labels() -> None:
