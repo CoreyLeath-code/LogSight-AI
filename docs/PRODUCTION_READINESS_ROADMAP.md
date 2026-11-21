@@ -41,9 +41,14 @@ has yet met its full deployment-specific exit criteria.
   errors and explicit ambiguous-delivery response; worker heartbeat
   monitoring remains outstanding
   ([PR #81](https://github.com/CoreyLeath-code/LogSight-AI/pull/81)).
-- [ ] **Phase 4 — ClickHouse sink failure telemetry (PR pending):** distinct
-  storage-write vs Kafka offset-commit failure signals, redaction regressions,
-  logging backend/alert integration and staging evidence remain open.
+- [x] **Phase 4 — ClickHouse sink failure telemetry foundation:** distinct
+  storage-write and offset-commit failure signals with sanitized regression tests
+  ([PR #82](https://github.com/CoreyLeath-code/LogSight-AI/pull/82)).
+- [ ] **Phase 4 — example alert rules (PR #83 pending):** reviewable static
+  Prometheus rules and alert-response guidance; no live alert delivery.
+- [ ] **Phase 4 — authenticated scrape plumbing (PR pending):** optional
+  secret-backed ServiceMonitor, Helm render tests and setup instructions;
+  staging scrape, TLS policy, network allowlist and operator approval remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
