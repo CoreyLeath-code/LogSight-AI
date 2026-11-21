@@ -4,6 +4,10 @@ image:
   repository: logsight-ai
   pullPolicy: IfNotPresent
   tag: ""
+  # Optional immutable sha256 digest; overrides tag when present.
+  digest: ""
+  # Staging/release gate: reject tags without a sha256 digest.
+  requireDigest: false
 
 imagePullSecrets: []
 nameOverride: ""
