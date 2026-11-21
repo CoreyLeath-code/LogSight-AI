@@ -117,6 +117,14 @@ def create_app() -> Any:
     if not 1 <= max_body_bytes <= 16 * 1024 * 1024:
         raise RuntimeError("LOGSIGHT_API_MAX_BODY_BYTES must be between 1 and 16777216")
 
+    redis_readiness_timeout_raw = os.getenv("LOGSIGHT_REDIS_READINESS_TIMEOUT_SECONDS", "1")
+    try:
+        redis_readiness_timeout = float(redis_readiness_timeout_raw)
+    except ValueError as exc:
+        raise RuntimeError("Invalid Redis readiness timeout") from exc
+    if not 0 < redis_readiness_timeout <= 5:
+        raise RuntimeError("Redis readiness timeout must be greater than 0 and at most 5 seconds")
+
     kafka_mode = os.getenv("LOGSIGHT_API_KAFKA_ENABLED", "false").strip().lower()
     if kafka_mode not in {"true", "false"}:
         raise RuntimeError("LOGSIGHT_API_KAFKA_ENABLED must be true or false")
@@ -177,6 +185,19 @@ def create_app() -> Any:
         stream = getattr(request.app.state, "kafka_stream", None)
         if kafka_stream is not None and (stream is None or not stream.is_ready()):
             raise HTTPException(status_code=503, detail="Kafka producer not ready")
+        # Redis controls are mandatory for admission when configured. A bounded
+        # ping rejects stale local readiness after a Redis outage, without
+        # disclosing connection details through the public probe.
+        if _admission_controller is not None:
+            try:
+                ping = getattr(_admission_controller.client, "ping", None)
+                if not callable(ping):
+                    raise RuntimeError("Redis client cannot probe readiness")
+                redis_ok = await asyncio.wait_for(ping(), timeout=redis_readiness_timeout)
+                if redis_ok is not True:
+                    raise RuntimeError("Redis readiness check returned unsuccessful result")
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Redis admission not ready") from exc
         return {"status": "ready", "service": "logsight-api"}
 
     @app.get("/metrics")
