@@ -47,9 +47,15 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — sample readiness alert rules:** static Prometheus rule
   examples and incident-response runbook, not deployed or alert-delivery proof
   ([PR #83](https://github.com/CoreyLeath-code/LogSight-AI/pull/83)).
-- [ ] **Phase 4 — optional authenticated scraping (PR pending):**
-  secret-backed ServiceMonitor manifests, Helm render checks and deployment
-  instructions await validation; live staging scrape and TLS review are open.
+- [x] **Phase 4 — opt-in authenticated ServiceMonitor plumbing:** secret
+  reference, Helm render checks and deployment caveats; live staging scrape
+  remains unverified ([PR #85](https://github.com/CoreyLeath-code/LogSight-AI/pull/85)).
+- [x] **Phase 4 — HA configuration test foundation:** HPA/PDB and probes
+  regression tests with an unexecuted staging disruption plan
+  ([PR #86](https://github.com/CoreyLeath-code/LogSight-AI/pull/86)).
+- [ ] **Phase 4 — recovery evidence validator (PR pending):** offline RPO/RTO
+  evaluator, negative test cases and owner-review runbook; live storage
+  restore, checksums and approval still outstanding.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
