@@ -64,3 +64,45 @@ def test_kafka_readiness_degrades_without_masking_liveness(
         result = client.get("/ready")
         assert result.status_code == 503
         assert "producer not ready" in result.json()["detail"]
+
+
+@pytest.mark.parametrize("mode", ["ok", "false", "error", "timeout"])
+def test_configured_redis_admission_affects_readiness_not_liveness(
+    monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    import asyncio
+    from types import SimpleNamespace
+
+    class FakeRedisClient:
+        async def ping(self) -> bool:
+            if mode == "false":
+                return False
+            if mode == "error":
+                raise ConnectionError("do not leak host details")
+            if mode == "timeout":
+                await asyncio.sleep(0.1)
+            return True
+
+    monkeypatch.setenv("LOGSIGHT_API_KAFKA_ENABLED", "false")
+    monkeypatch.setenv("LOGSIGHT_API_AUTH_MODE", "disabled")
+    monkeypatch.setenv("LOGSIGHT_REDIS_READINESS_TIMEOUT_SECONDS", "0.001")
+    monkeypatch.setattr(api, "_admission_controller", SimpleNamespace(client=FakeRedisClient()))
+    with TestClient(api.create_app()) as client:
+        assert client.get("/health").status_code == 200
+        response = client.get("/ready")
+        if mode == "ok":
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 503
+            assert response.json()["detail"] == "Redis admission not ready"
+            assert "do not leak" not in response.text
+
+
+@pytest.mark.parametrize("value", ["invalid", "-1", "0", "6"])
+def test_redis_readiness_timeout_rejects_invalid_configuration(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("LOGSIGHT_API_KAFKA_ENABLED", "false")
+    monkeypatch.setenv("LOGSIGHT_REDIS_READINESS_TIMEOUT_SECONDS", value)
+    with pytest.raises(RuntimeError, match="Redis readiness timeout"):
+        api.create_app()
