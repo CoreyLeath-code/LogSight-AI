@@ -47,8 +47,10 @@ def assess_alert_delivery(record: dict[str, Any]) -> dict[str, Any]:
     if type(limit) is not int or limit < 1:
         raise ValueError("approved_max_ack_seconds must be a positive integer")
     links = record.get("evidence_links")
-    if not isinstance(links, list) or not links or any(
-        not isinstance(link, str) or not link.startswith("https://") for link in links
+    if (
+        not isinstance(links, list)
+        or not links
+        or any(not isinstance(link, str) or not link.startswith("https://") for link in links)
     ):
         raise ValueError("evidence_links must be HTTPS references")
     start = _utc(record.get("signal_at_utc"), "signal_at_utc")
