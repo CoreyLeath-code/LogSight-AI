@@ -691,6 +691,18 @@ The first implementation milestone is **secure, durable ingestion**: authenticat
 API access, redaction, Kafka-backed acceptance, ClickHouse persistence, and
 dependency-aware readiness.
 
+### Phase 4 monitoring and alert examples
+
+Example Prometheus rules for the process-local Kafka and Redis readiness
+failure counters live at
+[deploy/prometheus/logsight-readiness-alerts.yaml](deploy/prometheus/logsight-readiness-alerts.yaml).
+They aggregate fixed-label readiness-request failures and link to the
+[Phase 4 response runbook](docs/PHASE4_ALERT_RESPONSE.md). The rules are **not
+deployed** by this repository and do not cover a quiet/unreachable process,
+ClickHouse worker failures, durable event delivery, SLO burn rate or
+Alertmanager notification delivery. A real authorized staging scrape and alert
+drill are still required.
+
 ## Documentation
 
 - [Production audit](docs/AUDIT.md)
