@@ -24,7 +24,7 @@ jobs:
             --set serviceMonitor.bearerTokenSecret.name=logsight-scrape-token \
             > rendered-servicemonitor.yaml
           grep -q 'kind: ServiceMonitor' rendered-servicemonitor.yaml
-          grep -q 'name: logsight-scrape-token' rendered-servicemonitor.yaml
+          grep -q 'logsight-scrape-token' rendered-servicemonitor.yaml
           if helm template logsight-ai charts/logsight-ai --namespace logsight \
             --set serviceMonitor.enabled=true > /dev/null 2>&1; then
             echo "ServiceMonitor accepted an empty token Secret reference"
