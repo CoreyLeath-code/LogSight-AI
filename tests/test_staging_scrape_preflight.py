@@ -85,8 +85,6 @@ def test_redirect_handler_rejects_cross_target_token_forwarding() -> None:
     )
     redirect = _RejectRedirect()
     assert (
-        redirect.redirect_request(
-            req, None, 302, "redirect", {}, "https://other.example/metrics"
-        )
+        redirect.redirect_request(req, None, 302, "redirect", {}, "https://other.example/metrics")
         is None
     )
