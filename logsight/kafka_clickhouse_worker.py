@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
@@ -21,6 +22,7 @@ from .storage import ClickHouseStore
 
 _FIELDS = ("level", "service", "source", "host", "message", "raw", "fingerprint")
 _OPTIONAL_FIELDS = ("trace_id", "span_id", "template")
+_LOGGER = logging.getLogger(__name__)
 
 
 class InvalidEventEnvelope(ValueError):
@@ -96,8 +98,20 @@ async def commit_source_offset(consumer: Any, message: Any) -> None:
 async def persist_message(message: Any, consumer: Any, store: ClickHouseStore) -> None:
     """Acknowledge only this partition after the storage insert succeeds."""
     event = decode_event(message.value)
-    await asyncio.to_thread(store.insert_event_deduplicated, event)
-    await commit_source_offset(consumer, message)
+    try:
+        await asyncio.to_thread(store.insert_event_deduplicated, event)
+    except Exception:
+        # Do not include exception text or event contents: upstream errors
+        # can contain secrets. Keep the Kafka offset available for replay.
+        _LOGGER.error("clickhouse_insert_failed offset_uncommitted")
+        raise
+    try:
+        await commit_source_offset(consumer, message)
+    except Exception:
+        # Insert may already have succeeded. Replay can be a duplicate even
+        # when ClickHouse's bounded token deduplication is enabled.
+        _LOGGER.error("kafka_offset_commit_failed insert_outcome_success_replay_possible")
+        raise
 
 
 async def run_worker() -> None:
