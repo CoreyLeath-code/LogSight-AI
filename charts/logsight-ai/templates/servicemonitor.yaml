@@ -1,0 +1,31 @@
+{{- if .Values.serviceMonitor.enabled }}
+{{- if not .Values.serviceMonitor.bearerTokenSecret.name }}
+{{- fail "serviceMonitor.bearerTokenSecret.name is required when serviceMonitor.enabled=true" }}
+{{- end }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "logsight-ai.fullname" . }}
+  labels:
+    {{- include "logsight-ai.labels" . | nindent 4 }}
+    {{- with .Values.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "logsight-ai.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval | quote }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout | quote }}
+      authorization:
+        type: Bearer
+        credentials:
+          name: {{ .Values.serviceMonitor.bearerTokenSecret.name | quote }}
+          key: {{ .Values.serviceMonitor.bearerTokenSecret.key | quote }}
+{{- end }}
