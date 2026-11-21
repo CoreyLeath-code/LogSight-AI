@@ -95,11 +95,17 @@ async def _process(
         _metrics["logsight_ingested_total"] += 1
         if result.score >= 0.5:
             _metrics["logsight_anomalies_total"] += 1
-        task_id = (
-            await asyncio.to_thread(_inference_dispatcher.submit_embeddings, [event])
-            if _inference_dispatcher is not None
-            else None
-        )
+        task_id = None
+        if _inference_dispatcher is not None:
+            try:
+                task_id = await asyncio.to_thread(_inference_dispatcher.submit_embeddings, [event])
+            except Exception as exc:
+                # Kafka may already have acknowledged the event and Celery
+                # may already have accepted the task. Do not claim rollback.
+                raise HTTPException(
+                    status_code=503,
+                    detail="Inference queue acknowledgement not confirmed; retry may duplicate event",
+                ) from exc
         return event, result, task_id
 
 
