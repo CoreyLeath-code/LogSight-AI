@@ -31,9 +31,12 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 3 — experimental API producer path:** optional Kafka publish
   before success response, with negative delivery tests
   ([PR #60](https://github.com/CoreyLeath-code/LogSight-AI/pull/60)).
-- [ ] **Phase 4 — Redis admission readiness (PR pending):** bounded Redis
-  connectivity checks in `/ready`, unit negative-path tests and deployment
-  validation are pending review.
+- [x] **Phase 4 — Redis admission readiness foundation:** bounded Redis
+  connectivity checks in `/ready` with negative-path tests
+  ([PR #78](https://github.com/CoreyLeath-code/LogSight-AI/pull/78)).
+- [ ] **Phase 4 — readiness metrics counters (PR pending):** low-cardinality
+  per-process readiness outcomes, access-control regression testing and
+  documentation await review; staging aggregation and alerts remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
