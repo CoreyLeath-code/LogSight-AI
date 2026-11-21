@@ -2,6 +2,9 @@
 {{- if not .Values.serviceMonitor.bearerTokenSecret.name }}
 {{- fail "serviceMonitor.bearerTokenSecret.name is required when serviceMonitor.enabled=true" }}
 {{- end }}
+{{- if not .Values.serviceMonitor.bearerTokenSecret.key }}
+{{- fail "serviceMonitor.bearerTokenSecret.key is required when serviceMonitor.enabled=true" }}
+{{- end }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
