@@ -17,6 +17,19 @@ jobs:
       - uses: azure/setup-helm@v5
       - run: helm lint charts/logsight-ai
       - run: helm template logsight-ai charts/logsight-ai --namespace logsight > rendered-manifests.yaml
+      - name: Validate opt-in ServiceMonitor render
+        run: |
+          helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set serviceMonitor.enabled=true \
+            --set serviceMonitor.bearerTokenSecret.name=logsight-scrape-token \
+            > rendered-servicemonitor.yaml
+          grep -q 'kind: ServiceMonitor' rendered-servicemonitor.yaml
+          grep -q 'logsight-scrape-token' rendered-servicemonitor.yaml
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set serviceMonitor.enabled=true > /dev/null 2>&1; then
+            echo "ServiceMonitor accepted an empty token Secret reference"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v7
         with:
           name: helm-manifests
