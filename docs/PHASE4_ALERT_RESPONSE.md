@@ -17,17 +17,26 @@ the Helm chart and no Alertmanager receiver is configured here.
 3. Aggregate across expected API replicas, test counter reset behavior, and
    verify that metric/job labels are stable and free of tenants, topics, event
    content, addresses and credentials.
-4. Define a separate signal for missing scrape targets: these example counters
-   only increase when readiness requests occur. Quiet services, failed metrics
-   collection and a complete process outage can therefore produce **no alert**
-   from these rules. An externally observed readiness/availability SLI is
-   required before an availability SLO can be asserted.
+4. The candidate `LogSightAPIMetricsScrapeMissing` rule uses the Prometheus
+   `up` series with a **placeholder** `job="logsight-ai"` target selector.
+   Replace it with the actual verified staging scrape job label. Its `up == 0`
+   branch reports failed scrapes of previously discovered targets and its
+   `absent(up{...})` branch detects the complete absence of matching series.
+   Test both cases in isolated staging, including target disappearance and
+   counter resets. A failed scrape is **not** an end-to-end user availability
+   SLI, and a healthy scrape does not prove /ready or ingestion health. An
+   independently measured availability SLI is still required.
 5. Review the alert evaluation interval, proposed five-minute `increase()`
    window, and two-minute `for` duration against owner-approved SLO/error
    budgets; these illustrative values are not an approved incident threshold.
 
 ## Triage and recovery
 
+- **Missing target/scrape:** verify the Prometheus target job label,
+  ServiceMonitor selection, Kubernetes NetworkPolicy allowlist, bearer-token
+  Secret, scrape TLS, discovery state and `up` series. Test both known-target
+  failures and all-series absence; this rule must not be treated as an
+  independent external synthetic availability monitor.
 - **Kafka:** verify `/health` vs `/ready`, producer lifecycle, enabled
   metadata monitor, recent confirmed publishes, and broker-side authorization,
   topic availability, replication and partition health. A successful metadata
