@@ -65,9 +65,13 @@ def assess_recovery_evidence(record: dict[str, Any]) -> dict[str, Any]:
     if record["environment"].lower() in {"production", "prod"}:
         raise ValueError("this evaluator is restricted to staging recovery drills")
     links = record["evidence_links"]
-    if not isinstance(links, list) or not links or any(
-        not isinstance(link, str) or not link.startswith("https://") or
-        not link.strip() for link in links
+    if (
+        not isinstance(links, list)
+        or not links
+        or any(
+            not isinstance(link, str) or not link.startswith("https://") or not link.strip()
+            for link in links
+        )
     ):
         raise ValueError("evidence_links must contain HTTPS evidence references")
     for field in ("data_integrity_verified", "service_recovered"):
