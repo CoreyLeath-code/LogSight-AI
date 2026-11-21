@@ -73,9 +73,14 @@ has yet met its full deployment-specific exit criteria.
   namespace/pod-restricted Prometheus access with fail-closed Helm validation;
   live staging scrape remains unverified
   ([PR #93](https://github.com/CoreyLeath-code/LogSight-AI/pull/93)).
-- [ ] **Phase 4 — ServiceMonitor/API authentication coupling (PR pending):**
-  require token mode and Secret-backed API credentials whenever monitoring
-  is enabled; live staging Secret/collector validation remains open.
+- [x] **Phase 4 — ServiceMonitor/API authentication coupling:** require
+  token mode and matching Secret-backed API/collector credentials; live
+  staging authentication remains unverified
+  ([PR #94](https://github.com/CoreyLeath-code/LogSight-AI/pull/94)).
+- [ ] **Phase 4 — rendered monitoring contract check (PR pending):** verify
+  Deployment/Service/ServiceMonitor selector agreement, token Secret parity,
+  and namespace/pod-restricted ingress in opt-in Helm rendering; live
+  monitoring remains unverified.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
