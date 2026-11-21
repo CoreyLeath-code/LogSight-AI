@@ -48,7 +48,13 @@ class BatchPayload(BaseModel):  # type: ignore[misc]
 
 
 _recent: deque[EnrichedLog] = deque(maxlen=int(os.getenv("LOGSIGHT_WINDOW", "500")))
-_metrics = {"logsight_ingested_total": 0, "logsight_anomalies_total": 0}
+_metrics = {
+    "logsight_ingested_total": 0,
+    "logsight_anomalies_total": 0,
+    "logsight_readiness_success_total": 0,
+    "logsight_readiness_kafka_failure_total": 0,
+    "logsight_readiness_redis_failure_total": 0,
+}
 _template_parser: TemplateParser = build_template_parser()
 _admission_controller: RedisAdmissionController | None = build_redis_controller()
 _inference_dispatcher: CeleryInferenceDispatcher | None = build_celery_dispatcher()
@@ -184,6 +190,7 @@ def create_app() -> Any:
         # The producer state only reflects successful local initialization.
         stream = getattr(request.app.state, "kafka_stream", None)
         if kafka_stream is not None and (stream is None or not stream.is_ready()):
+            _metrics["logsight_readiness_kafka_failure_total"] += 1
             raise HTTPException(status_code=503, detail="Kafka producer not ready")
         # Redis controls are mandatory for admission when configured. A bounded
         # ping rejects stale local readiness after a Redis outage, without
@@ -197,7 +204,9 @@ def create_app() -> Any:
                 if redis_ok is not True:
                     raise RuntimeError("Redis readiness check returned unsuccessful result")
             except Exception as exc:
+                _metrics["logsight_readiness_redis_failure_total"] += 1
                 raise HTTPException(status_code=503, detail="Redis admission not ready") from exc
+        _metrics["logsight_readiness_success_total"] += 1
         return {"status": "ready", "service": "logsight-api"}
 
     @app.get("/metrics")

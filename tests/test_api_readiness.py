@@ -106,3 +106,38 @@ def test_redis_readiness_timeout_rejects_invalid_configuration(
     monkeypatch.setenv("LOGSIGHT_REDIS_READINESS_TIMEOUT_SECONDS", value)
     with pytest.raises(RuntimeError, match="Redis readiness timeout"):
         api.create_app()
+
+
+def test_readiness_metrics_are_bounded_and_auth_protected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    class Client:
+        healthy = True
+
+        async def ping(self) -> bool:
+            return self.healthy
+
+    redis = Client()
+    monkeypatch.setenv("LOGSIGHT_API_KAFKA_ENABLED", "false")
+    monkeypatch.setenv("LOGSIGHT_API_AUTH_MODE", "token")
+    monkeypatch.setenv("LOGSIGHT_API_TOKEN", "s" * 48)
+    monkeypatch.setattr(api, "_admission_controller", SimpleNamespace(client=redis))
+    keys = (
+        "logsight_readiness_success_total",
+        "logsight_readiness_redis_failure_total",
+    )
+    before = {key: api._metrics[key] for key in keys}
+    with TestClient(api.create_app()) as client:
+        assert client.get("/metrics").status_code == 401
+        assert client.get("/ready").status_code == 200
+        redis.healthy = False
+        assert client.get("/ready").status_code == 503
+        metrics = client.get("/metrics", headers={"Authorization": "Bearer " + "s" * 48})
+        assert metrics.status_code == 200
+        for key in keys:
+            assert key + " " in metrics.text
+        assert "Redis admission not ready" not in metrics.text
+    assert api._metrics[keys[0]] == before[keys[0]] + 1
+    assert api._metrics[keys[1]] == before[keys[1]] + 1
