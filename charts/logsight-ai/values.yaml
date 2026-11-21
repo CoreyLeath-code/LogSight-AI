@@ -18,6 +18,17 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
+# Requires a preinstalled monitoring.coreos.com ServiceMonitor CRD.
+# A token is read from an externally managed Secret, not Helm values.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+  bearerTokenSecret:
+    name: ""
+    key: token
+
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
