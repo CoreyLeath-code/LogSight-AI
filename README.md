@@ -237,6 +237,19 @@ validation only; configure authenticated production backends before promotion.
 See [Collector deployment and correlation](docs/OTEL_COLLECTOR.md) for validation
 and production-promotion guidance.
 
+### Low-cardinality readiness counters (Phase 4 incremental)
+
+The existing authenticated `/metrics` endpoint includes cumulative counters
+for successful readiness checks and failures attributed to Kafka or Redis:
+`logsight_readiness_success_total`,
+`logsight_readiness_kafka_failure_total`, and
+`logsight_readiness_redis_failure_total`. They contain no tenant, host, topic
+or error-message labels; their scope is the local API process and resets on
+restart. A Kafka failure takes precedence if both dependency checks are unhealthy.
+The counters reflect **readiness requests**, not outages, failed events or
+successful durable log deliveries. Production monitoring still requires
+deployment-level aggregation, SLO-owned alerts and a staging alert drill.
+
 ### Bounded Redis admission readiness (Phase 4 incremental)
 
 When `LOGSIGHT_REDIS_URL` enables Redis admission control, `GET /ready`
