@@ -37,6 +37,9 @@ has yet met its full deployment-specific exit criteria.
 - [ ] **Phase 4 — readiness metrics counters (PR pending):** low-cardinality
   per-process readiness outcomes, access-control regression testing and
   documentation await review; staging aggregation and alerts remain open.
+- [ ] **Phase 4 — inference queue failure semantics (PR pending):** sanitized
+  enqueue errors and explicit ambiguous-delivery response; worker heartbeat
+  monitoring and live broker outage evidence remain outstanding.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
