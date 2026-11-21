@@ -1,3 +1,11 @@
+{{- if and .Values.image.requireDigest (not .Values.image.digest) }}
+{{- fail "image.requireDigest=true requires image.digest with sha256:<64 lowercase hex characters>" }}
+{{- end }}
+{{- if .Values.image.digest }}
+{{- if not (regexMatch "^sha256:[0-9a-f]{64}$" .Values.image.digest) }}
+{{- fail "image.digest must be sha256:<64 lowercase hexadecimal characters>" }}
+{{- end }}
+{{- end }}
 {{- if .Values.serviceMonitor.enabled }}
 {{- if or (hasKey .Values.env "LOGSIGHT_API_AUTH_MODE") (hasKey .Values.env "LOGSIGHT_API_TOKEN") }}
 {{- fail "serviceMonitor manages LOGSIGHT_API_AUTH_MODE and LOGSIGHT_API_TOKEN; remove overrides from env" }}
@@ -39,7 +47,11 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: logsight-api
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+          {{- else }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+          {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["uvicorn"]
           args: ["logsight.api:app", "--host", "0.0.0.0", "--port", "8000"]
