@@ -713,6 +713,7 @@ drill are still required.
 - [Helm chart](charts/logsight-ai/README.md)
 - [Incident investigator](docs/INCIDENT_INVESTIGATOR.md)
 - [Deployment and rollback checklist](docs/DEPLOYMENT.md)
+- [Phase 4 backup/restore evidence and RPO/RTO gate](docs/PHASE4_BACKUP_RESTORE_EVIDENCE.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Labeled benchmark corpus](docs/LABELED_BENCHMARKS.md)
 - [Mathematical foundations](docs/MATHEMATICAL_FOUNDATIONS.md)
