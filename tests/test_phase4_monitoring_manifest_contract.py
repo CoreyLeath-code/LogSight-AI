@@ -47,9 +47,7 @@ def manifests() -> list[dict[str, object]]:
                     {
                         "port": "http",
                         "path": "/metrics",
-                        "authorization": {
-                            "credentials": {"name": "scrape", "key": "token"}
-                        },
+                        "authorization": {"credentials": {"name": "scrape", "key": "token"}},
                     }
                 ],
             },
