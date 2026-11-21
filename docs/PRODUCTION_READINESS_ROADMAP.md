@@ -59,9 +59,12 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — soak acceptance validator foundation:** offline success-rate,
   latency and duration gate; staging load tests remain unexecuted
   ([PR #88](https://github.com/CoreyLeath-code/LogSight-AI/pull/88)).
-- [ ] **Phase 4 — alert delivery evidence validator (PR pending):** offline
-  acknowledgment deadline validation, negative tests and staging runbook;
-  real Prometheus/Alertmanager delivery, receipt and human approval remain open.
+- [x] **Phase 4 — alert delivery evidence validator:** offline
+  acknowledgment deadline validation and negative tests, not a live drill
+  ([PR #90](https://github.com/CoreyLeath-code/LogSight-AI/pull/90)).
+- [ ] **Phase 4 — missing-scrape alert example (PR pending):** separate `up`
+  and absent-series alert, static regression tests and response runbook; job
+  selector, deployment, receiver delivery and alert drill remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
