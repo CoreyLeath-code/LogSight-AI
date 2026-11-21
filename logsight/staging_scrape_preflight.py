@@ -7,7 +7,7 @@ import os
 import ssl
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 
 _METRIC = "logsight_readiness_success_total"
 
@@ -30,11 +30,21 @@ def validate_target(base_url: str) -> str:
     return base_url.rstrip("/")
 
 
+class _RejectRedirect(HTTPRedirectHandler):
+    """Never forward the staging bearer token to another URL."""
+
+    def redirect_request(
+        self, req: Request, fp: object, code: int, msg: str, headers: object, newurl: str
+    ) -> None:
+        return None
+
+
 def _get(url: str, token: str | None = None) -> tuple[int, str]:
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     req = Request(url, headers=headers, method="GET")
     try:
-        with urlopen(req, timeout=5, context=ssl.create_default_context()) as response:
+        opener = build_opener(_RejectRedirect(), HTTPSHandler(context=ssl.create_default_context()))
+        with opener.open(req, timeout=5) as response:
             return response.status, response.read(128 * 1024).decode("utf-8", "replace")
     except HTTPError as exc:
         return exc.code, ""
