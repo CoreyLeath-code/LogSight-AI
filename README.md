@@ -250,6 +250,17 @@ The counters reflect **readiness requests**, not outages, failed events or
 successful durable log deliveries. Production monitoring still requires
 deployment-level aggregation, SLO-owned alerts and a staging alert drill.
 
+### Inference enqueue failure semantics (Phase 4 incremental)
+
+When optional Celery inference dispatch is enabled, a failed enqueue now returns
+a sanitized HTTP 503 instead of leaking the underlying broker exception. The
+response explicitly warns that retrying can duplicate a previously accepted
+Kafka event or accepted Celery task. Existing Kafka and process-local ingestion
+effects **are not rolled back** after a failed or ambiguous enqueue; this is a
+failure-reporting hardening step, not an atomic Kafka-to-Celery transaction.
+It does not monitor inference worker availability, task execution, or result
+durability. Verify worker outages and replay behavior in staging.
+
 ### Bounded Redis admission readiness (Phase 4 incremental)
 
 When `LOGSIGHT_REDIS_URL` enables Redis admission control, `GET /ready`
