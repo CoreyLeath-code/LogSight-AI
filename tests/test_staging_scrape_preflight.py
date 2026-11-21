@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from urllib.request import Request
+
+import pytest
 
 from logsight.staging_scrape_preflight import _RejectRedirect, run_preflight, validate_target
 
