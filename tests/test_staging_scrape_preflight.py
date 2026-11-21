@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from logsight.staging_scrape_preflight import run_preflight, validate_target
+from urllib.request import Request
+
+from logsight.staging_scrape_preflight import _RejectRedirect, run_preflight, validate_target
 
 
 @pytest.mark.parametrize(
@@ -70,6 +72,21 @@ def test_preflight_fails_closed_if_metrics_public(
         return 200, "logsight_readiness_success_total 1"
 
     monkeypatch.setattr("logsight.staging_scrape_preflight._get", fake_get)
-    assert run_preflight("https://logsight.example", "a" * 32)[
-        "metrics_unauthorized_without_token"
-    ] is False
+    assert (
+        run_preflight("https://logsight.example", "a" * 32)["metrics_unauthorized_without_token"]
+        is False
+    )
+
+
+def test_redirect_handler_rejects_cross_target_token_forwarding() -> None:
+    req = Request(
+        "https://logsight.example/metrics",
+        headers={"Authorization": "Bearer synthetic-secret"},
+    )
+    redirect = _RejectRedirect()
+    assert (
+        redirect.redirect_request(
+            req, None, 302, "redirect", {}, "https://other.example/metrics"
+        )
+        is None
+    )
