@@ -24,9 +24,7 @@ def test_default_ha_values_have_safe_minimum_capacity() -> None:
 def test_hpa_pdb_and_probes_are_rendered_from_chart_configuration() -> None:
     hpa = (CHART / "templates" / "hpa.yaml").read_text(encoding="utf-8")
     pdb = (CHART / "templates" / "pdb.yaml").read_text(encoding="utf-8")
-    deployment = (CHART / "templates" / "deployment.yaml").read_text(
-        encoding="utf-8"
-    )
+    deployment = (CHART / "templates" / "deployment.yaml").read_text(encoding="utf-8")
     assert "kind: HorizontalPodAutoscaler" in hpa
     assert ".Values.autoscaling.minReplicas" in hpa
     assert "kind: PodDisruptionBudget" in pdb
