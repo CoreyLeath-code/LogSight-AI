@@ -1,3 +1,9 @@
+{{- if .Values.networkPolicy.monitoringIngress.enabled }}
+{{- if not .Values.networkPolicy.enabled }}{{ fail "monitoringIngress requires networkPolicy.enabled=true" }}{{ end }}
+{{- if not .Values.serviceMonitor.enabled }}{{ fail "monitoringIngress requires serviceMonitor.enabled=true" }}{{ end }}
+{{- if empty .Values.networkPolicy.monitoringIngress.namespaceLabels }}{{ fail "monitoringIngress.namespaceLabels must select an approved namespace" }}{{ end }}
+{{- if empty .Values.networkPolicy.monitoringIngress.podLabels }}{{ fail "monitoringIngress.podLabels must select approved collector pods" }}{{ end }}
+{{- end }}
 {{- if .Values.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -14,6 +20,18 @@ spec:
     - Egress
   ingress:
     {{- toYaml .Values.networkPolicy.ingress | nindent 4 }}
+    {{- if .Values.networkPolicy.monitoringIngress.enabled }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.monitoringIngress.namespaceLabels | nindent 14 }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.monitoringIngress.podLabels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+    {{- end }}
   egress:
     {{- toYaml (concat .Values.networkPolicy.egress .Values.networkPolicy.extraEgress) | nindent 4 }}
 {{- end }}
