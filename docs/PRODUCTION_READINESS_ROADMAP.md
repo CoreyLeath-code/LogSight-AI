@@ -69,9 +69,13 @@ has yet met its full deployment-specific exit criteria.
   read-only protected metrics smoke checks and negative tests; actual
   authorized staging deployment and observations remain open
   ([PR #92](https://github.com/CoreyLeath-code/LogSight-AI/pull/92)).
-- [ ] **Phase 4 — monitoring NetworkPolicy ingress configuration (PR pending):**
-  optional namespace/pod-restricted Prometheus access with Helm negative
-  validation; no live staging scrape or deployment evidence yet.
+- [x] **Phase 4 — monitoring NetworkPolicy ingress foundation:** optional
+  namespace/pod-restricted Prometheus access with fail-closed Helm validation;
+  live staging scrape remains unverified
+  ([PR #93](https://github.com/CoreyLeath-code/LogSight-AI/pull/93)).
+- [ ] **Phase 4 — ServiceMonitor/API authentication coupling (PR pending):**
+  require token mode and Secret-backed API credentials whenever monitoring
+  is enabled; live staging Secret/collector validation remains open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).

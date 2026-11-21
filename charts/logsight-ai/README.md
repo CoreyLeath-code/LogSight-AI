@@ -32,10 +32,16 @@ Set `serviceMonitor.enabled=true` **only** in a cluster with the Prometheus
 Operator's ServiceMonitor CRD. Configure
 `serviceMonitor.bearerTokenSecret.name` to reference an externally managed
 Secret in the same namespace as the ServiceMonitor (default key: `token`).
-The token must match `LOGSIGHT_API_TOKEN` used by the API in
-`LOGSIGHT_API_AUTH_MODE=token`. Do not put the token itself in chart values,
-ConfigMaps, annotations, GitHub Actions logs, or source control. Mount or
-reference the API token through an externally managed secret using `extraEnv`.
+When enabled, the chart explicitly sets `LOGSIGHT_API_AUTH_MODE=token`
+and injects `LOGSIGHT_API_TOKEN` using the **same external Secret/key**
+referenced by the ServiceMonitor, preventing an unauthenticated metrics
+endpoint due to missing manual API configuration. Do not separately set these
+environment variables through `env` or `extraEnv`; Helm rejects duplicates.
+The application also rejects tokens shorter than 32 characters at startup.
+Ensure the Secret already exists in the chart's namespace, is accessible to
+both the API pod and Prometheus Operator, and is rotated by the deployment
+owner. Never put the token value in chart values, ConfigMaps, annotations,
+GitHub Actions logs or source control.
 
 **This is an opt-in manifest, not a deployed monitor.** `/metrics` is still
 served on the API HTTP port. Provide TLS at an approved ingress or authenticated

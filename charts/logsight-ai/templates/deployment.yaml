@@ -1,3 +1,13 @@
+{{- if .Values.serviceMonitor.enabled }}
+{{- if or (hasKey .Values.env "LOGSIGHT_API_AUTH_MODE") (hasKey .Values.env "LOGSIGHT_API_TOKEN") }}
+{{- fail "serviceMonitor manages LOGSIGHT_API_AUTH_MODE and LOGSIGHT_API_TOKEN; remove overrides from env" }}
+{{- end }}
+{{- range .Values.extraEnv }}
+{{- if or (eq .name "LOGSIGHT_API_AUTH_MODE") (eq .name "LOGSIGHT_API_TOKEN") }}
+{{- fail "serviceMonitor manages LOGSIGHT_API_AUTH_MODE and LOGSIGHT_API_TOKEN; remove overrides from extraEnv" }}
+{{- end }}
+{{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,6 +50,15 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
+            {{- if .Values.serviceMonitor.enabled }}
+            - name: LOGSIGHT_API_AUTH_MODE
+              value: "token"
+            - name: LOGSIGHT_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "serviceMonitor.bearerTokenSecret.name is required" .Values.serviceMonitor.bearerTokenSecret.name | quote }}
+                  key: {{ required "serviceMonitor.bearerTokenSecret.key is required" .Values.serviceMonitor.bearerTokenSecret.key | quote }}
+            {{- end }}
             {{- range $name, $value := .Values.env }}
             - name: {{ $name }}
               value: {{ $value | quote }}
