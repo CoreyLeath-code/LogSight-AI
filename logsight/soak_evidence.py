@@ -48,9 +48,12 @@ def assess_soak_evidence(record: dict[str, Any]) -> dict[str, Any]:
     if record["approved_min_success_ratio"] > 1:
         raise ValueError("success ratio objective must be between 0 and 1")
     evidence_links = record.get("evidence_links")
-    if not isinstance(evidence_links, list) or not evidence_links or any(
-        not isinstance(link, str) or not link.startswith("https://")
-        for link in evidence_links
+    if (
+        not isinstance(evidence_links, list)
+        or not evidence_links
+        or any(
+            not isinstance(link, str) or not link.startswith("https://") for link in evidence_links
+        )
     ):
         raise ValueError("HTTPS evidence links are required")
     if record.get("dependency_recovery_verified") is not True:
