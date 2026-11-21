@@ -77,10 +77,13 @@ has yet met its full deployment-specific exit criteria.
   token mode and matching Secret-backed API/collector credentials; live
   staging authentication remains unverified
   ([PR #94](https://github.com/CoreyLeath-code/LogSight-AI/pull/94)).
-- [ ] **Phase 4 — rendered monitoring contract check (PR pending):** verify
-  Deployment/Service/ServiceMonitor selector agreement, token Secret parity,
-  and namespace/pod-restricted ingress in opt-in Helm rendering; live
-  monitoring remains unverified.
+- [x] **Phase 4 — rendered monitoring contract validation:** verify
+  Deployment/Service/ServiceMonitor selectors, shared token Secret and
+  restricted ingress in Helm render; live staging remains unverified
+  ([PR #95](https://github.com/CoreyLeath-code/LogSight-AI/pull/95)).
+- [ ] **Phase 4 — immutable staging image digest validation (PR pending):**
+  render a reviewed image by registry digest with opt-in staging fail-closed
+  gate and negative Helm tests; no real staging deploy evidence yet.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
