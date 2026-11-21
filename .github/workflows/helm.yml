@@ -68,6 +68,8 @@ jobs:
           grep -q 'kind: NetworkPolicy' monitored-manifests.yaml
           grep -q 'prometheus' monitored-manifests.yaml
           grep -q 'monitoring' monitored-manifests.yaml
+          python -m pip install 'PyYAML==6.0.4'
+          python scripts/validate_monitoring_manifests.py monitored-manifests.yaml
           if helm template logsight-ai charts/logsight-ai --namespace logsight \
             --set networkPolicy.monitoringIngress.enabled=true > /dev/null 2>&1; then
             echo "Accepted monitoring ingress without ServiceMonitor or selectors"
