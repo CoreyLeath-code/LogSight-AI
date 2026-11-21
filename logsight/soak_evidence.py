@@ -38,7 +38,7 @@ def assess_soak_evidence(record: dict[str, Any]) -> dict[str, Any]:
     )
     for field in numeric_fields:
         value = record.get(field)
-        if type(value) not in (int, float) or value < 0:
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
             raise ValueError(f"{field} must be a non-negative number")
     total = record["requests_total"]
     if total < 1 or record["duration_seconds"] <= 0:
