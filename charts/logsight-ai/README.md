@@ -89,3 +89,28 @@ resources. NetworkPolicy permits TCP on the API service port, not just
 `/metrics`; application bearer-token auth must remain enabled and the
 network/mesh must enforce the approved TLS transport. This does not create
 a Prometheus instance, Secret, receiver, or a successful staging scrape.
+
+## Immutable staging image pinning
+
+For approved staging and release validation, set `image.requireDigest=true`
+and provide `image.digest` as `sha256:` followed by **64 lowercase
+hexadecimal characters** from a verified OCI registry artifact. The chart
+renders `repository@sha256:…` and ignores `image.tag` when a valid digest
+is supplied. Without a digest, default development installs retain their
+tag-based behavior; **do not use a mutable tag as staging promotion evidence**.
+
+Example values (a placeholder digest is **not** a real published artifact):
+
+```yaml
+image:
+  repository: registry.example/logsight-ai
+  digest: "sha256:REPLACE_WITH_64_LOWERCASE_HEX_CHARACTERS"
+  requireDigest: true
+```
+
+Obtain the digest from the actual reviewed and scanned registry artifact;
+record image source, Git SHA, signatures where supported and rollback digest
+in the restricted staging deployment record. A render-only digest check does
+not verify artifact provenance, a real registry, vulnerability posture, or
+successful deployment. The default Helm install example above is for
+development and should not be copied as a staging promotion record.
