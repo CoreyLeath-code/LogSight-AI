@@ -25,6 +25,32 @@ jobs:
             > rendered-servicemonitor.yaml
           grep -q 'kind: ServiceMonitor' rendered-servicemonitor.yaml
           grep -q 'logsight-scrape-token' rendered-servicemonitor.yaml
+          grep -q 'name: LOGSIGHT_API_AUTH_MODE' rendered-servicemonitor.yaml
+          grep -q 'name: LOGSIGHT_API_TOKEN' rendered-servicemonitor.yaml
+          grep -q 'secretKeyRef:' rendered-servicemonitor.yaml
+          grep -q 'value: "token"' rendered-servicemonitor.yaml
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set serviceMonitor.enabled=true \
+            --set serviceMonitor.bearerTokenSecret.name=logsight-scrape-token \
+            --set serviceMonitor.bearerTokenSecret.key= > /dev/null 2>&1; then
+            echo "ServiceMonitor accepted an empty Secret key"
+            exit 1
+          fi
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set serviceMonitor.enabled=true \
+            --set serviceMonitor.bearerTokenSecret.name=logsight-scrape-token \
+            --set env.LOGSIGHT_API_AUTH_MODE=disabled > /dev/null 2>&1; then
+            echo "ServiceMonitor accepted unauthenticated API override"
+            exit 1
+          fi
+          if helm template logsight-ai charts/logsight-ai --namespace logsight \
+            --set serviceMonitor.enabled=true \
+            --set serviceMonitor.bearerTokenSecret.name=logsight-scrape-token \
+            --set extraEnv[0].name=LOGSIGHT_API_TOKEN \
+            --set extraEnv[0].value=placeholder > /dev/null 2>&1; then
+            echo "ServiceMonitor accepted duplicate API token override"
+            exit 1
+          fi
           if helm template logsight-ai charts/logsight-ai --namespace logsight \
             --set serviceMonitor.enabled=true > /dev/null 2>&1; then
             echo "ServiceMonitor accepted an empty token Secret reference"
