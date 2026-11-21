@@ -88,6 +88,12 @@ podDisruptionBudget:
 
 networkPolicy:
   enabled: true
+  # Opt-in restricted ingress for Prometheus scraper pods.
+  # Requires a ServiceMonitor and explicit namespace and pod label matches.
+  monitoringIngress:
+    enabled: false
+    namespaceLabels: {}
+    podLabels: {}
   ingress:
     - from:
         - namespaceSelector:
