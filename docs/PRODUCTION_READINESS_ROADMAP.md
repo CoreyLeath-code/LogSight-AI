@@ -44,10 +44,12 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — ClickHouse failure signals:** separate fixed operator signals
   for ClickHouse insert and Kafka offset commit failures, with secret-safety tests
   ([PR #82](https://github.com/CoreyLeath-code/LogSight-AI/pull/82)).
-- [ ] **Phase 4 — sample readiness alert rules (PR pending):** fixed-label
-  Prometheus alert examples, static tests and response runbook await review;
-  authenticated scraping, notification delivery, staging alert drills and
-  operator-approved SLOs remain incomplete.
+- [x] **Phase 4 — sample readiness alert rules:** static Prometheus rule
+  examples and incident-response runbook, not deployed or alert-delivery proof
+  ([PR #83](https://github.com/CoreyLeath-code/LogSight-AI/pull/83)).
+- [ ] **Phase 4 — optional authenticated scraping (PR pending):**
+  secret-backed ServiceMonitor manifests, Helm render checks and deployment
+  instructions await validation; live staging scrape and TLS review are open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
