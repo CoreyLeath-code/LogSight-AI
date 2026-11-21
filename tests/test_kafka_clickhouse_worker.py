@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import sys
 from collections import namedtuple
 from types import ModuleType, SimpleNamespace
@@ -190,3 +191,59 @@ def test_different_partition_offsets_never_advance_together(
         assert consumer.commits == [{tp("logs", 0): 8}, {tp("logs", 1): 13}]
 
     asyncio.run(scenario())
+
+
+def test_clickhouse_insert_failure_emits_sanitized_replay_signal(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    class Consumer:
+        async def commit(self, offsets: Any) -> None:
+            raise AssertionError("Offset must not commit when storage fails")
+
+    class Store:
+        def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
+            raise ConnectionError("password=EXTRA_SECRET_CREDENTIAL")
+
+    async def scenario() -> None:
+        message = SimpleNamespace(value=encoded(), topic="private-topic", partition=0, offset=7)
+        with pytest.raises(ConnectionError):
+            await persist_message(message, Consumer(), Store())  # type: ignore[arg-type]
+
+    with caplog.at_level(logging.ERROR, logger="logsight.kafka_clickhouse_worker"):
+        asyncio.run(scenario())
+    assert "clickhouse_insert_failed offset_uncommitted" in caplog.text
+    assert "EXTRA_SECRET_CREDENTIAL" not in caplog.text
+    assert "private-topic" not in caplog.text
+
+
+def test_offset_commit_failure_emits_ambiguous_replay_signal(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    tp = namedtuple("TopicPartition", ["topic", "partition"])
+    module = ModuleType("aiokafka")
+    module.TopicPartition = tp  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiokafka", module)
+
+    class Consumer:
+        async def commit(self, offsets: Any) -> None:
+            raise ConnectionError("password=EXTRA_SECRET_CREDENTIAL")
+
+    class Store:
+        def __init__(self) -> None:
+            self.inserted = 0
+
+        def insert_event_deduplicated(self, event: dict[str, Any]) -> None:
+            self.inserted += 1
+
+    async def scenario() -> None:
+        store = Store()
+        message = SimpleNamespace(value=encoded(), topic="private-topic", partition=0, offset=7)
+        with pytest.raises(ConnectionError):
+            await persist_message(message, Consumer(), store)  # type: ignore[arg-type]
+        assert store.inserted == 1
+
+    with caplog.at_level(logging.ERROR, logger="logsight.kafka_clickhouse_worker"):
+        asyncio.run(scenario())
+    assert "kafka_offset_commit_failed insert_outcome_success_replay_possible" in caplog.text
+    assert "EXTRA_SECRET_CREDENTIAL" not in caplog.text
+    assert "private-topic" not in caplog.text

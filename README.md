@@ -17,6 +17,24 @@ Overview
 
 LogSight-AI is a local-first log analysis and anomaly-detection platform that is being extended from a deterministic CLI into a production-oriented observability stack. The original parser/analyzer remains dependency-light and explainable; enterprise integrations are optional and isolated behind adapters.
 
+### ClickHouse sink failure signals (Phase 4 incremental)
+
+The experimental Kafka-to-ClickHouse worker emits two fixed, low-cardinality
+ERROR log messages (without event bodies, topic names, credentials, exception
+strings or record identities):
+
+- `clickhouse_insert_failed offset_uncommitted`: ClickHouse insert failed or
+  returned an ambiguous outcome; no source offset commit is attempted.
+- `kafka_offset_commit_failed insert_outcome_success_replay_possible`: the
+  storage insert returned successfully but the source offset commit failed.
+  On replay, the same event may be delivered again, subject to the bounded
+  ClickHouse deduplication window.
+
+These signals can be searched in an operator-controlled logging backend.
+They do **not** establish continuous health, an alert policy, exactly-once
+delivery, bounded retry, or live outage recovery. Log forwarding, alerts and
+a reviewed failure-injection drill remain outstanding.
+
 ### Experimental Kafka-to-ClickHouse sink
 
 The repository includes a single-worker reference sink launched with
