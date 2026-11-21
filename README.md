@@ -237,6 +237,20 @@ validation only; configure authenticated production backends before promotion.
 See [Collector deployment and correlation](docs/OTEL_COLLECTOR.md) for validation
 and production-promotion guidance.
 
+### Bounded Redis admission readiness (Phase 4 incremental)
+
+When `LOGSIGHT_REDIS_URL` enables Redis admission control, `GET /ready`
+also performs a bounded asynchronous Redis `PING`. Set
+`LOGSIGHT_REDIS_READINESS_TIMEOUT_SECONDS` to a value greater than 0 and at
+most 5 seconds (default: 1). A timeout, connection failure, unsupported client
+or unsuccessful response returns HTTP 503 without leaking dependency details;
+`GET /health` remains independent. No Redis probe runs when admission is disabled.
+
+**Limit:** A PING does not prove the admission Lua script, quotas, persistence,
+HA failover or durability work correctly. Frequent Kubernetes readiness
+requests generate additional Redis traffic. Redis readiness is currently
+evaluated on request; capacity and failure-injection evidence are still needed.
+
 ### Redis admission controls
 
 Redis admission controls are disabled unless `LOGSIGHT_REDIS_URL` is configured. Once
