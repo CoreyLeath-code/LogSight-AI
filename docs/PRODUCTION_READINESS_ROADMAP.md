@@ -34,6 +34,9 @@ has yet met its full deployment-specific exit criteria.
 - [ ] **Phase 4 — Redis admission readiness (PR pending):** bounded Redis
   connectivity checks in `/ready`, unit negative-path tests and deployment
   validation are pending review.
+- [ ] **Phase 4 — inference queue failure semantics (PR pending):** sanitized
+  enqueue errors and explicit ambiguous-delivery response; worker heartbeat
+  monitoring and live broker outage evidence remain outstanding.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
