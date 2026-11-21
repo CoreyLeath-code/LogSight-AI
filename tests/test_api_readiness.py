@@ -134,9 +134,7 @@ def test_readiness_metrics_are_bounded_and_auth_protected(
         assert client.get("/ready").status_code == 200
         redis.healthy = False
         assert client.get("/ready").status_code == 503
-        metrics = client.get(
-            "/metrics", headers={"Authorization": "Bearer " + "s" * 48}
-        )
+        metrics = client.get("/metrics", headers={"Authorization": "Bearer " + "s" * 48})
         assert metrics.status_code == 200
         for key in keys:
             assert key + " " in metrics.text
