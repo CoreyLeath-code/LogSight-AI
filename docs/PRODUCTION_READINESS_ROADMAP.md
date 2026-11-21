@@ -53,9 +53,15 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — HA configuration test foundation:** HPA/PDB and probes
   regression tests with an unexecuted staging disruption plan
   ([PR #86](https://github.com/CoreyLeath-code/LogSight-AI/pull/86)).
-- [ ] **Phase 4 — recovery evidence validator (PR pending):** offline RPO/RTO
-  evaluator, negative test cases and owner-review runbook; live storage
-  restore, checksums and approval still outstanding.
+- [x] **Phase 4 — recovery evidence validator foundation:** offline RPO/RTO
+  evaluator and negative tests; live restores and human evidence review remain open
+  ([PR #89](https://github.com/CoreyLeath-code/LogSight-AI/pull/89)).
+- [x] **Phase 4 — soak acceptance validator foundation:** offline success-rate,
+  latency and duration gate; staging load tests remain unexecuted
+  ([PR #88](https://github.com/CoreyLeath-code/LogSight-AI/pull/88)).
+- [ ] **Phase 4 — alert delivery evidence validator (PR pending):** offline
+  acknowledgment deadline validation, negative tests and staging runbook;
+  real Prometheus/Alertmanager delivery, receipt and human approval remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
