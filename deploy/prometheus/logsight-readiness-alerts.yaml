@@ -1,0 +1,24 @@
+# Example Prometheus alert rules for the optional LogSight API.
+# NOT deployed or connected to a notification receiver by this repository.
+# Review ownership, scrape authentication, thresholds and SLOs in staging.
+groups:
+  - name: logsight-api-readiness
+    rules:
+      - alert: LogSightKafkaReadinessFailuresObserved
+        expr: sum by (job) (increase(logsight_readiness_kafka_failure_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka-related LogSight readiness failures observed"
+          description: "A readiness request failed for the Kafka producer. Check the broker metadata monitor and confirmed publish state; verify impact and owner-approved alert thresholds."
+          runbook_url: "https://github.com/CoreyLeath-code/LogSight-AI/blob/main/docs/PHASE4_ALERT_RESPONSE.md"
+      - alert: LogSightRedisReadinessFailuresObserved
+        expr: sum by (job) (increase(logsight_readiness_redis_failure_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis-related LogSight readiness failures observed"
+          description: "The API reported Redis admission readiness failures; check authenticated Redis connectivity and probe budgets."
+          runbook_url: "https://github.com/CoreyLeath-code/LogSight-AI/blob/main/docs/PHASE4_ALERT_RESPONSE.md"
