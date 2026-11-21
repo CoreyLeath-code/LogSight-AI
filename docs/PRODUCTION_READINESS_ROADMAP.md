@@ -62,9 +62,12 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — alert delivery evidence validator:** offline
   acknowledgment deadline validation and negative tests, not a live drill
   ([PR #90](https://github.com/CoreyLeath-code/LogSight-AI/pull/90)).
-- [ ] **Phase 4 — missing-scrape alert example (PR pending):** separate `up`
-  and absent-series alert, static regression tests and response runbook; job
-  selector, deployment, receiver delivery and alert drill remain open.
+- [x] **Phase 4 — missing-scrape alert example:** explicit down-target and
+  absent-series alerts plus static tests; real scrape and receiver remain unverified
+  ([PR #91](https://github.com/CoreyLeath-code/LogSight-AI/pull/91)).
+- [ ] **Phase 4 — staging authenticated scrape preflight (PR pending):**
+  read-only protected metrics smoke checks and negative tests; actual
+  authorized staging deployment and observations remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
