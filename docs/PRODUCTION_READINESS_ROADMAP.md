@@ -34,12 +34,16 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — Redis admission readiness foundation:** bounded Redis
   connectivity checks in `/ready` with negative-path tests
   ([PR #78](https://github.com/CoreyLeath-code/LogSight-AI/pull/78)).
-- [ ] **Phase 4 — readiness metrics counters (PR pending):** low-cardinality
-  per-process readiness outcomes, access-control regression testing and
-  documentation await review; staging aggregation and alerts remain open.
-- [ ] **Phase 4 — inference queue failure semantics (PR pending):** sanitized
-  enqueue errors and explicit ambiguous-delivery response; worker heartbeat
-  monitoring and live broker outage evidence remain outstanding.
+- [x] **Phase 4 — readiness outcome counters:** low-cardinality per-process
+  readiness outcomes and guarded metrics endpoint regression tests
+  ([PR #79](https://github.com/CoreyLeath-code/LogSight-AI/pull/79)).
+- [x] **Phase 4 — inference enqueue failure semantics:** sanitized enqueue
+  errors and explicit ambiguous-delivery response; worker heartbeat
+  monitoring remains outstanding
+  ([PR #81](https://github.com/CoreyLeath-code/LogSight-AI/pull/81)).
+- [ ] **Phase 4 — ClickHouse sink failure telemetry (PR pending):** distinct
+  storage-write vs Kafka offset-commit failure signals, redaction regressions,
+  logging backend/alert integration and staging evidence remain open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
