@@ -102,9 +102,12 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — read-only Alertmanager routing observation:** checks
   active staging alert and assigned receiver; notification delivery remains
   unverified ([PR #101](https://github.com/CoreyLeath-code/LogSight-AI/pull/101)).
-- [ ] **Phase 4 — approved synthetic alert drill harness (PR pending):**
-  opt-in Alertmanager POST with approval and dry-run protections, offline
-  tests and delivery evidence procedure; not a live drill or real rule test.
+- [x] **Phase 4 — approved synthetic alert drill harness:** gated
+  opt-in Alertmanager POST, dry-run, tests and operator instructions; no live
+  delivery evidence ([PR #102](https://github.com/CoreyLeath-code/LogSight-AI/pull/102)).
+- [ ] **Phase 4 — isolated local kind alert rehearsal (PR pending):**
+  opt-in Kubernetes-in-Docker Alertmanager with memory-only test receiver
+  and offline tests; not a shared staging environment or human acknowledgment.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
