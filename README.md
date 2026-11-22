@@ -723,6 +723,7 @@ drill are still required.
 - [Phase 4 Alertmanager active routing observation](docs/PHASE4_STAGING_ALERTMANAGER_ROUTING.md)
 - [Phase 4 approved synthetic staging alert delivery drill](docs/PHASE4_STAGING_SYNTHETIC_ALERT_DRILL.md)
 - [Phase 4 opt-in local kind staging alert rehearsal](docs/PHASE4_LOCAL_KIND_STAGING.md)
+- [Phase 4 native Windows PowerShell kind bootstrap](docs/PHASE4_WINDOWS_KIND_BOOTSTRAP.md)
 - [Phase 4 soak acceptance evidence](docs/PHASE4_SOAK_ACCEPTANCE.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Labeled benchmark corpus](docs/LABELED_BENCHMARKS.md)
