@@ -73,9 +73,7 @@ def test_read_only_queries_use_explicit_staging_scope(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[list[str]] = []
-    deployment = {
-        "spec": {"selector": {"matchLabels": {"app": "logsight", "tier": "api"}}}
-    }
+    deployment = {"spec": {"selector": {"matchLabels": {"app": "logsight", "tier": "api"}}}}
 
     def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
         calls.append(args)
@@ -95,9 +93,9 @@ def test_read_only_queries_use_explicit_staging_scope(
 
 def test_rejects_unsafe_selector(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
-        return SimpleNamespace(stdout=json.dumps({
-            "spec": {"selector": {"matchExpressions": [{"key": "x"}]}}
-        }))
+        return SimpleNamespace(
+            stdout=json.dumps({"spec": {"selector": {"matchExpressions": [{"key": "x"}]}}})
+        )
 
     monkeypatch.setattr(snapshot.subprocess, "run", fake_run)
     with pytest.raises(ValueError, match="matchLabels"):
