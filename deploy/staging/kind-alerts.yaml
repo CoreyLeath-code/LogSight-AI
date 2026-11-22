@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logsight-staging
+  labels:
+    purpose: synthetic-alert-rehearsal
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: staging-alertmanager-config
+  namespace: logsight-staging
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 1m
+    route:
+      receiver: discard-unmatched
+      group_by: [alertname, logsight_drill_id]
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 12h
+      routes:
+        - receiver: staging-test-webhook
+          matchers:
+            - alertname="LogSightStagingSyntheticDeliveryDrill"
+            - environment="staging"
+          continue: false
+    receivers:
+      - name: discard-unmatched
+      - name: staging-test-webhook
+        webhook_configs:
+          - url: http://staging-receiver.logsight-staging.svc.cluster.local:8080/alertmanager
+            send_resolved: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: staging-receiver
+  namespace: logsight-staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: staging-receiver
+  template:
+    metadata:
+      labels:
+        app: staging-receiver
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: receiver
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-B", "/app/staging_test_receiver.py"]
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - mountPath: /app
+              name: receiver-code
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+      volumes:
+        - name: receiver-code
+          configMap:
+            name: staging-receiver-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: staging-receiver
+  namespace: logsight-staging
+spec:
+  type: ClusterIP
+  selector:
+    app: staging-receiver
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: staging-alertmanager
+  namespace: logsight-staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: staging-alertmanager
+  template:
+    metadata:
+      labels:
+        app: staging-alertmanager
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.28.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config.file=/etc/alertmanager/alertmanager.yml
+            - --storage.path=/alertmanager
+            - --web.listen-address=:9093
+          ports:
+            - containerPort: 9093
+              name: http
+          volumeMounts:
+            - name: configuration
+              mountPath: /etc/alertmanager
+              readOnly: true
+            - name: storage
+              mountPath: /alertmanager
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            periodSeconds: 5
+      volumes:
+        - name: configuration
+          configMap:
+            name: staging-alertmanager-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: staging-alertmanager
+  namespace: logsight-staging
+spec:
+  type: ClusterIP
+  selector:
+    app: staging-alertmanager
+  ports:
+    - name: http
+      port: 9093
+      targetPort: http
