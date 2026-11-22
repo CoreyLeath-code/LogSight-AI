@@ -39,9 +39,7 @@ def inspect_pods(
         metadata = pod.get("metadata", {})
         spec = pod.get("spec", {})
         status = pod.get("status", {})
-        containers = [
-            c for c in spec.get("containers", []) if c.get("name") == container_name
-        ]
+        containers = [c for c in spec.get("containers", []) if c.get("name") == container_name]
         if len(containers) != 1:
             raise ValueError("selected Pod missing a unique target container")
         statuses = [
@@ -70,9 +68,13 @@ def inspect_pods(
         row["ready"] and row["spec_matches_expected"] and row["phase"] == "Running"
         for row in observations
     )
-    healthy = bool(observations) and ready_count >= min_ready and all(
-        row["ready"] and row["spec_matches_expected"] and row["phase"] == "Running"
-        for row in observations
+    healthy = (
+        bool(observations)
+        and ready_count >= min_ready
+        and all(
+            row["ready"] and row["spec_matches_expected"] and row["phase"] == "Running"
+            for row in observations
+        )
     )
     return {
         "status": "pass" if healthy else "fail",
