@@ -37,7 +37,9 @@ def sanitized_receipts(payload: Any, received_at: str) -> list[dict[str, str]]:
             or alert.get("status") != "firing"
             or not isinstance(drill_id, str)
             or not (6 <= len(drill_id) <= 40)
-            or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in drill_id)
+            or any(
+                character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in drill_id
+            )
         ):
             raise ValueError("non-synthetic alert rejected")
         result.append({"drill_id": drill_id, "received_at_utc": received_at})
