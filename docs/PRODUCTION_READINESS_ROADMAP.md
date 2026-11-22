@@ -92,9 +92,13 @@ has yet met its full deployment-specific exit criteria.
 - [x] **Phase 4 — read-only staging cluster snapshot:** explicit-context
   Kubernetes Deployment template and replica observation with tests; no real
   staging evidence ([PR #98](https://github.com/CoreyLeath-code/LogSight-AI/pull/98)).
-- [ ] **Phase 4 — read-only staging Pod image observation (PR pending):**
-  inspect scoped Pod image specifications, runtime imageIDs and readiness
-  without assuming manifest/config digest equivalence; no staging run yet.
+- [x] **Phase 4 — read-only staging Pod image observation:** scoped Pod
+  image references, runtime imageIDs and readiness with offline tests; no
+  live staging run or digest equivalence claim
+  ([PR #99](https://github.com/CoreyLeath-code/LogSight-AI/pull/99)).
+- [ ] **Phase 4 — direct staging Prometheus target observation (PR pending):**
+  read-only authenticated target discovery and scrape health checks;
+  no staging query or verified alert delivery yet.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
