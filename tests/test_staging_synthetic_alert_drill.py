@@ -54,8 +54,13 @@ def test_dry_run_never_opens_network(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(drill, "build_opener", forbidden)
     result = drill.submit_drill(
-        "https://alertmanager-staging.example", "", specimen(), "CHANGE-1234", "",
-        False, "",
+        "https://alertmanager-staging.example",
+        "",
+        specimen(),
+        "CHANGE-1234",
+        "",
+        False,
+        "",
     )
     assert result["status"] == "dry_run"
     assert result["receiver_delivery_verified"] is False
