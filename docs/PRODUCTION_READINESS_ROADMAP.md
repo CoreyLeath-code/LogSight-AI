@@ -85,10 +85,13 @@ has yet met its full deployment-specific exit criteria.
   digest-pinned image rendering with opt-in fail-closed Helm validation;
   no live staging deploy evidence
   ([PR #96](https://github.com/CoreyLeath-code/LogSight-AI/pull/96)).
-- [ ] **Phase 4 — staging deployment evidence gate (PR pending):**
-  verify submitted rollout/replica counts, exact image digest, approved
-  revisions and authenticated scrape declaration; real deployment and
-  independent review remain outstanding.
+- [x] **Phase 4 — staging deployment evidence gate:** offline validation
+  of rollout replica counts, image digest, approved revisions and documented
+  authenticated scrape; actual staging deployment remains unverified
+  ([PR #97](https://github.com/CoreyLeath-code/LogSight-AI/pull/97)).
+- [ ] **Phase 4 — read-only staging cluster snapshot (PR pending):**
+  explicitly scoped kubectl GET of Deployment rollout and digest-pinned
+  template, with offline tests; live staging observation remains open.
 - [x] **Phase 4 — failed monitor supervision:** readiness fails closed after
   the Kafka metadata monitoring task exits unexpectedly
   ([PR #76](https://github.com/CoreyLeath-code/LogSight-AI/pull/76)).
