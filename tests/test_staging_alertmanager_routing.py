@@ -36,7 +36,9 @@ def test_unrouted_or_suppressed_alert_fails(failure: str) -> None:
     else:
         data[0]["receivers"] = [{"name": "other"}]
     assert (
-        route.assess_alertmanager_routing(data, "LogSightAPIMetricsScrapeMissing", "staging-oncall")["status"]
+        route.assess_alertmanager_routing(
+            data, "LogSightAPIMetricsScrapeMissing", "staging-oncall"
+        )["status"]
         == "fail"
     )
 
@@ -53,9 +55,7 @@ def test_incomplete_alert_data_rejected(problem: str) -> None:
     else:
         del data[0]["receivers"]
     with pytest.raises(ValueError):
-        route.assess_alertmanager_routing(
-            data, "LogSightAPIMetricsScrapeMissing", "staging-oncall"
-        )
+        route.assess_alertmanager_routing(data, "LogSightAPIMetricsScrapeMissing", "staging-oncall")
 
 
 def test_requires_bearer_token_before_network(monkeypatch: pytest.MonkeyPatch) -> None:
