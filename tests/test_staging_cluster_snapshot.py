@@ -80,7 +80,11 @@ def test_reads_explicit_cluster_with_only_get(monkeypatch: pytest.MonkeyPatch) -
     report = snapshot.read_snapshot("my-staging", "logsight", "logsight-ai", IMAGE)
     assert report["status"] == "pass"
     assert calls[0][:5] == [
-        "kubectl", "--context", "my-staging", "--namespace", "logsight",
+        "kubectl",
+        "--context",
+        "my-staging",
+        "--namespace",
+        "logsight",
     ]
     assert "get" in calls[0]
     assert not any(value in calls[0] for value in ("apply", "patch", "delete"))
