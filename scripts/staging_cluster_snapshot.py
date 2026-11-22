@@ -54,9 +54,7 @@ def summarize_deployment(document: dict[str, Any], expected_image: str) -> dict[
     ):
         raise ValueError("invalid Deployment status counts")
     pinned = expected_image in images and all(_DIGEST.fullmatch(value) for value in images)
-    healthy = (
-        desired > 0 and ready == desired and updated == desired and observed >= generation
-    )
+    healthy = desired > 0 and ready == desired and updated == desired and observed >= generation
     return {
         "deployment": metadata.get("name"),
         "expected_image": expected_image,
@@ -118,9 +116,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
-        report = read_snapshot(
-            args.context, args.namespace, args.deployment, args.expected_image
-        )
+        report = read_snapshot(args.context, args.namespace, args.deployment, args.expected_image)
     except ValueError as exc:
         parser.exit(2, f"staging snapshot rejected: {exc}\n")
     contents = json.dumps(report, indent=2, sort_keys=True) + "\n"
