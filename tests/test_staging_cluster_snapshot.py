@@ -10,7 +10,6 @@ import pytest
 
 from scripts import staging_cluster_snapshot as snapshot
 
-
 IMAGE = "registry.example/logsight-ai@sha256:" + "a" * 64
 
 
