@@ -717,6 +717,7 @@ drill are still required.
 - [Phase 4 alert delivery acknowledgment evidence gate](docs/PHASE4_ALERT_DELIVERY_EVIDENCE.md)
 - [Phase 4 staging authenticated metrics preflight](docs/PHASE4_STAGING_SCRAPE_PREFLIGHT.md)
 - [Phase 4 staging deployment and monitoring evidence](docs/PHASE4_STAGING_DEPLOYMENT_EVIDENCE.md)
+- [Phase 4 read-only staging Kubernetes snapshot](docs/PHASE4_STAGING_CLUSTER_SNAPSHOT.md)
 - [Phase 4 soak acceptance evidence](docs/PHASE4_SOAK_ACCEPTANCE.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Labeled benchmark corpus](docs/LABELED_BENCHMARKS.md)
