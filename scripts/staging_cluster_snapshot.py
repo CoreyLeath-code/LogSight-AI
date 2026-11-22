@@ -48,10 +48,15 @@ def summarize_deployment(document: dict[str, Any], expected_image: str) -> dict[
     updated = status.get("updatedReplicas", 0)
     observed = status.get("observedGeneration", -1)
     generation = metadata.get("generation", 0)
-    if any(type(value) is not int or value < 0 for value in (desired, ready, updated, observed, generation)):
+    if any(
+        type(value) is not int or value < 0
+        for value in (desired, ready, updated, observed, generation)
+    ):
         raise ValueError("invalid Deployment status counts")
     pinned = expected_image in images and all(_DIGEST.fullmatch(value) for value in images)
-    healthy = desired > 0 and ready == desired and updated == desired and observed >= generation
+    healthy = (
+        desired > 0 and ready == desired and updated == desired and observed >= generation
+    )
     return {
         "deployment": metadata.get("name"),
         "expected_image": expected_image,
