@@ -27,9 +27,7 @@ def payload() -> dict[str, object]:
 
 
 def test_observed_healthy_target_passes() -> None:
-    result = target.assess_prometheus_target(
-        payload(), "logsight-staging", "logsight-api:8000"
-    )
+    result = target.assess_prometheus_target(payload(), "logsight-staging", "logsight-api:8000")
     assert result["status"] == "pass"
     assert result["independent_service_sli_verified"] is False
 
@@ -50,9 +48,10 @@ def test_unhealthy_or_invalid_target(changed: str) -> None:
         with pytest.raises(ValueError):
             target.assess_prometheus_target(data, "logsight-staging", "logsight-api:8000")
     else:
-        assert target.assess_prometheus_target(
-            data, "logsight-staging", "logsight-api:8000"
-        )["status"] == "fail"
+        assert (
+            target.assess_prometheus_target(data, "logsight-staging", "logsight-api:8000")["status"]
+            == "fail"
+        )
 
 
 def test_missing_and_duplicate_targets_rejected() -> None:
@@ -115,7 +114,9 @@ def test_staging_api_uses_only_target_endpoint(
 
     monkeypatch.setattr(target, "build_opener", lambda *args: Opener())
     result = target.observe_target(
-        "https://prometheus.example", "synthetic-secret", "logsight-staging",
+        "https://prometheus.example",
+        "synthetic-secret",
+        "logsight-staging",
         "logsight-api:8000",
     )
     assert result["status"] == "pass"
@@ -128,6 +129,9 @@ def test_redirect_handler_refuses_forwarding() -> None:
         "https://prometheus.example/api/v1/targets",
         headers={"Authorization": "Bearer synthetic-secret"},
     )
-    assert target._NoRedirect().redirect_request(
-        req, None, 302, "redirect", {}, "https://other.example/targets"
-    ) is None
+    assert (
+        target._NoRedirect().redirect_request(
+            req, None, 302, "redirect", {}, "https://other.example/targets"
+        )
+        is None
+    )
