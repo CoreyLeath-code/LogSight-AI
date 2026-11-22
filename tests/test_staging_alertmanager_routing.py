@@ -36,9 +36,7 @@ def test_unrouted_or_suppressed_alert_fails(failure: str) -> None:
     else:
         data[0]["receivers"] = [{"name": "other"}]
     assert (
-        route.assess_alertmanager_routing(
-            data, "LogSightAPIMetricsScrapeMissing", "staging-oncall"
-        )["status"]
+        route.assess_alertmanager_routing(data, "LogSightAPIMetricsScrapeMissing", "staging-oncall")["status"]
         == "fail"
     )
 
@@ -66,9 +64,7 @@ def test_requires_bearer_token_before_network(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setattr(route, "build_opener", forbidden)
     with pytest.raises(ValueError, match="ALERTMANAGER_STAGING_TOKEN"):
-        route.observe_alertmanager(
-            "https://alertmanager.example", "", "TestAlert", "staging"
-        )
+        route.observe_alertmanager("https://alertmanager.example", "", "TestAlert", "staging")
 
 
 def test_reads_only_alertmanager_alerts_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
