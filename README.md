@@ -721,6 +721,7 @@ drill are still required.
 - [Phase 4 staging Pod image and readiness evidence](docs/PHASE4_STAGING_POD_IMAGE_EVIDENCE.md)
 - [Phase 4 read-only Prometheus target health observation](docs/PHASE4_STAGING_PROMETHEUS_TARGET.md)
 - [Phase 4 Alertmanager active routing observation](docs/PHASE4_STAGING_ALERTMANAGER_ROUTING.md)
+- [Phase 4 approved synthetic staging alert delivery drill](docs/PHASE4_STAGING_SYNTHETIC_ALERT_DRILL.md)
 - [Phase 4 soak acceptance evidence](docs/PHASE4_SOAK_ACCEPTANCE.md)
 - [Benchmark methodology](docs/BENCHMARKING.md)
 - [Labeled benchmark corpus](docs/LABELED_BENCHMARKS.md)
