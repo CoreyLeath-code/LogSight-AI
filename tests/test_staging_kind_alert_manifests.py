@@ -28,9 +28,9 @@ def test_services_are_internal_only_and_staging_scoped() -> None:
 
 
 def test_only_test_alert_routes_to_webhook() -> None:
-    config = next(
-        item for item in documents() if item["kind"] == "ConfigMap"
-    )["data"]["alertmanager.yml"]
+    config = next(item for item in documents() if item["kind"] == "ConfigMap")["data"][
+        "alertmanager.yml"
+    ]
     parsed = yaml.safe_load(config)
     route = parsed["route"]
     assert route["receiver"] == "discard-unmatched"
