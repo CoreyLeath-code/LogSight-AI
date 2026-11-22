@@ -77,8 +77,10 @@ def assess_staging_deployment(record: dict[str, Any]) -> dict[str, Any]:
     if finished < started:
         raise ValueError("rollout completion precedes start")
     links = record.get("evidence_links")
-    if not isinstance(links, list) or not links or any(
-        not isinstance(link, str) or not link.startswith("https://") for link in links
+    if (
+        not isinstance(links, list)
+        or not links
+        or any(not isinstance(link, str) or not link.startswith("https://") for link in links)
     ):
         raise ValueError("nonempty HTTPS evidence links are required")
     healthy = ready >= desired and updated == desired
