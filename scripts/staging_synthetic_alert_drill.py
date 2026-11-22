@@ -23,9 +23,7 @@ _TICKET = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{3,79}$")
 _ALERT = "LogSightStagingSyntheticDeliveryDrill"
 
 
-def make_drill(
-    drill_id: str, approval_ticket: str, now: datetime
-) -> dict[str, Any]:
+def make_drill(drill_id: str, approval_ticket: str, now: datetime) -> dict[str, Any]:
     """Create a synthetic, bounded-lifetime alert with no sensitive payload."""
     if not _DRILL_ID.fullmatch(drill_id):
         raise ValueError("drill_id must be 6-40 lowercase characters, digits or dashes")
@@ -121,9 +119,7 @@ def main() -> int:
     parser.add_argument("--confirm", default="")
     args = parser.parse_args()
     try:
-        drill = make_drill(
-            args.drill_id, args.approval_ticket, datetime.now(timezone.utc)
-        )
+        drill = make_drill(args.drill_id, args.approval_ticket, datetime.now(timezone.utc))
         result = submit_drill(
             args.base_url,
             os.environ.get("ALERTMANAGER_STAGING_TOKEN", ""),
