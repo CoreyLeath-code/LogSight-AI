@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ssl
+import urllib.parse
 import urllib.request
 from typing import Any
 
@@ -68,7 +69,11 @@ def test_valid_https_client_checks_hostname_and_sends_credentials_only_in_header
     )
     assert store.execute("SELECT 1") == b"ok"
     request, options = seen[0]
-    assert request.get_full_url().startswith("https://clickhouse.example:8443/")
+    parsed_url = urllib.parse.urlparse(request.get_full_url())
+    assert parsed_url.scheme == "https"
+    assert parsed_url.hostname == "clickhouse.example"
+    assert parsed_url.port == 8443
+    assert parsed_url.path.startswith("/")
     assert "synthetic-value" not in request.get_full_url()
     assert request.get_header("X-clickhouse-user") == "service"
     assert request.get_header("X-clickhouse-key") == "synthetic-value"
